@@ -13,6 +13,7 @@
 
 # discard files
 gitignore_*
+*.bat
 
 # ───────────────────────────────
 # Backup and cache folders
@@ -33,5 +34,5 @@ array/ArrayStorage/**
 
 # ───────────────────────────────
 # Not ignore execution time files.
-benchmark/ExecutionTimes/*
-!benchmark/ExecutionTimes/*.time
+benchmark/ExecutionTimes/*_variability/*
+!benchmark/ExecutionTimes/*_variability/*.time
