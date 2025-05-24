@@ -26,6 +26,7 @@ report/Charts/Temp/
 # ───────────────────────────────
 # Temporary graphic files
 *.emf
+*.ini
 
 # ───────────────────────────────
 # Not ignore array creation files.
@@ -34,5 +35,6 @@ array/ArrayStorage/**
 
 # ───────────────────────────────
 # Not ignore execution time files.
+benchmark/ExecutionTimes/*
 benchmark/ExecutionTimes/*_variability/*
 !benchmark/ExecutionTimes/*_variability/*.time
