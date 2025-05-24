@@ -148,7 +148,8 @@ class MultiProcessing:
             parallel_processes = FULL_THROTTLE_PROCESS_COUNT
         elif processes_number:
             parallel_processes = min(processes_number, FULL_THROTTLE_PROCESS_COUNT)
-            print(f"[Warning] The number of processes requested ({processes_number}) exceeds the number of processes in full throttle mode ({FULL_THROTTLE_PROCESS_COUNT}).")
+            if parallel_processes != processes_number:
+                print(f"[Warning] The number of processes requested ({processes_number}) exceeds the number of processes in full throttle mode ({FULL_THROTTLE_PROCESS_COUNT}).")
         else:
             parallel_processes = SAFE_PROCESS_COUNT
 
@@ -198,10 +199,9 @@ class MultiProcessing:
             while True:
     
                 if not os.path.exists(self.guard_file_path):
-                    print("[ABORT] Guard file removed manually. Terminating pool...")
                     pool.terminate()
                     aborted = True
-                    break
+                    raise RuntimeError("[ABORT] Guard file removed manually. Terminating pool...")
     
                 if all([res.ready() for res in self.results]):
                     print("\nAll tasks completed!")
