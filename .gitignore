@@ -13,6 +13,7 @@
 
 # discard files
 gitignore_*
+*.bat
 
 # ───────────────────────────────
 # Backup and cache folders
