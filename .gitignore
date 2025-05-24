@@ -33,5 +33,5 @@ array/ArrayStorage/**
 
 # ───────────────────────────────
 # Not ignore execution time files.
-benchmark/ExecutionTimes/*
-!benchmark/ExecutionTimes/*.time
+benchmark/ExecutionTimes/*_variability/*
+!benchmark/ExecutionTimes/*_variability/*.time
