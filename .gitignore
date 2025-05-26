@@ -30,7 +30,7 @@ report/Charts/Temp/
 
 # ───────────────────────────────
 # Not ignore array creation files.
-array/ArrayStorage/**
+array/ArrayStorage/*/storage_*/*
 !array/ArrayStorage/**/storage_*/generation_params.json
 
 # ───────────────────────────────
