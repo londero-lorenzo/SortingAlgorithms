@@ -70,6 +70,10 @@ class BaseDataDictionary:
         return self.data.values()
     def items(self):
         return self.data.items()
+
+    def __contains__(self, key):
+        return key in self.data
+        
     def __getitem__(self, key):
         return self.data[key]
     def __len__(self):
