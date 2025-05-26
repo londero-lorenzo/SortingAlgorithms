@@ -1,0 +1,39 @@
+# ───────────────────────────────
+# Compress files
+*.zpaq
+*.rar
+*.zip
+*.7z
+
+# ───────────────────────────────
+# Virtual environment
+.labProjVenv/
+
+# ───────────────────────────────
+
+# discard files
+gitignore_*
+*.bat
+
+# ───────────────────────────────
+# Backup and cache folders
+__pycache__/
+.ipynb_checkpoints/
+
+# Temporary folders
+report/Charts/Temp/
+
+# ───────────────────────────────
+# Temporary graphic files
+*.emf
+*.ini
+
+# ───────────────────────────────
+# Not ignore array creation files.
+array/ArrayStorage/**
+!array/ArrayStorage/**/storage_*/generation_params.json
+
+# ───────────────────────────────
+# Not ignore execution time files.
+benchmark/ExecutionTimes/*_variability/*
+!benchmark/ExecutionTimes/*_variability/*.time
