@@ -85,7 +85,9 @@ def measure(function, minTime, *args):
     
 ## function to measure sorting time for determinate array chunk
 def measureChunkPoolArray(chunk, function, minTime= None):
-    assert isinstance(chunk, dict), f"Expected dict, got {type(chunk)}"
+    chunk_copy_comparison = copy.deepcopy(chunk)
+    chunk_copy = copy.deepcopy(chunk)
+    assert isinstance(chunk_copy, dict), f"Expected dict, got {type(chunk_copy)}"
     result_poolDict = {}
     
     if minTime is None:
@@ -93,16 +95,16 @@ def measureChunkPoolArray(chunk, function, minTime= None):
     
     [measure(function, minTime, [i for i in range(100)])]
     
-    for chunk_id, array_sample_container in chunk.items():
+    for chunk_id, array_sample_container in chunk_copy.items():
         assert isinstance(array_sample_container, ArrayDataManager.ArraySampleContainer), f"Chunk element expected as ArraySampleContainer, got {type(array_sample_container)}"
             
         array_execution_times = []
         for array_sample in array_sample_container.get_samples():
             time_repetitions= []
-            time.sleep(0.01)
+            
             for data in array_sample.get_sample():
-                time_repetitions.append(measure(function, minTime, copy.deepcopy(data)))
-                
+                time_repetitions.append(measure(function, minTime, data))
+                     
             array_execution_times.append(
                 ArrayDataManager.ArrayExecutionTime(
                     variability = array_sample.get_variability(),
@@ -112,7 +114,7 @@ def measureChunkPoolArray(chunk, function, minTime= None):
             )
         
         result_poolDict.update({chunk_id : array_execution_times})
-
+    assert ArrayDataManager.deep_compare(chunk, chunk_copy_comparison), f"Modification in array structure detected."
     return result_poolDict
 
     
