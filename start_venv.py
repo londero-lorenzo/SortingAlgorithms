@@ -8,10 +8,9 @@ from setup import get_activate_path
 def open_venv_shell():
     
     activate_path = get_activate_path()
-    
     if os.name == 'nt':
 
-        subprocess.run(['cmd.exe', '/k', f'{activate_path} && echo Environment activated. Type \'deactivate\' to exit.'])
+        subprocess.run(['cmd.exe', '/k', f"{activate_path} && echo Environment activated. Type \'deactivate\' to exit."])
     
     else: 
 

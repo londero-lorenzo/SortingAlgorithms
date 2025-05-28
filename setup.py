@@ -7,6 +7,18 @@ import platform
 VENV_DIR = ".labProjVenv"
 REQUIREMENTS_FILE = "requirements.txt"
 
+def space_fix(s):
+	if " " in s:
+		dirs = s.split(os.sep)
+		for i, dir in enumerate(dirs[:]):
+			if " " in dir:
+				dirs[i] = f'"{dir}"'
+		return fix_output(os.sep.join(dirs))
+		
+	return s
+    
+def fix_output(s):
+    return f"{s}"
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 VENV_DIR = os.path.join(SCRIPT_DIR, VENV_DIR)
@@ -19,29 +31,29 @@ def create_virtualenv():
     
 def get_pip_path():
     if os.name == 'nt':
-        return os.path.join(VENV_DIR, "Scripts", "pip.exe")
+        return fix_output(os.path.join(VENV_DIR, "Scripts", "pip.exe"))
     else:
-        return os.path.join(VENV_DIR, "bin", "pip")
+        return fix_output(os.path.join(VENV_DIR, "bin", "pip"))
 
 def get_jupyter_path():
     if os.name == 'nt':
-        return os.path.join(VENV_DIR, "Scripts", "jupyter.exe")
+        return fix_output(os.path.join(VENV_DIR, "Scripts", "jupyter.exe"))
     else:
-        return os.path.join(VENV_DIR, "bin", "jupyter")
+        return fix_output(os.path.join(VENV_DIR, "bin", "jupyter"))
         
         
 def get_activate_path():
     if os.name == 'nt':
-        return os.path.join(VENV_DIR, 'Scripts', 'activate.bat')
+        return fix_output(os.path.join(VENV_DIR, 'Scripts', 'activate.bat'))
     else:
-        return os.path.join(VENV_DIR, 'bin', 'activate')
+        return fix_output(os.path.join(VENV_DIR, 'bin', 'activate'))
     
     
 def get_python_path():
     if os.name == 'nt':
-        return os.path.join(VENV_DIR, 'Scripts', 'python.exe')
+        return fix_output(os.path.join(VENV_DIR, 'Scripts', 'python.exe'))
     else:
-        return os.path.join(VENV_DIR, 'bin', 'python')
+        return fix_output(os.path.join(VENV_DIR, 'bin', 'python'))
 
 def install_requirements():
     pip_path = get_pip_path()
