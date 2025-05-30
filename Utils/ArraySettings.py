@@ -47,11 +47,11 @@ NUMBER_OF_REPETITIONS = 10
 ###
 
 
-MAIN_ARRAY_STORAGE_FOLDER_PATH = lambda project_root: os.sep.join([project_root, "Array", "ArrayStorage", f"{VARIABILITY.value['code']}_variability"])
+MAIN_ARRAY_STORAGE_FOLDER_PATH = os.path.join("Array", "ArrayStorage", f"{VARIABILITY.value['code']}_variability")
 ARRAY_STORAGE_FOLDER_PREFIX = "storage_"
 
-def GET_ARRAY_STORAGE_FOLDER_PATH(project_root, folder_name=None, get_all=False):
-    main_storage_folder = MAIN_ARRAY_STORAGE_FOLDER_PATH(project_root)
+def GET_ARRAY_STORAGE_FOLDER_PATH(folder_name=None, get_all=False):
+    main_storage_folder = MAIN_ARRAY_STORAGE_FOLDER_PATH
     folder_list = sorted(
         [
             f
@@ -69,34 +69,36 @@ def GET_ARRAY_STORAGE_FOLDER_PATH(project_root, folder_name=None, get_all=False)
 
     assert selected_folder in folder_list, f"No storage folder named {selected_folder} found in {main_storage_folder}"
 
-    return os.sep.join([main_storage_folder, selected_folder])
+    return [os.sep.join([main_storage_folder, selected_folder])]
 
-def GET_COMPRESSED_ARRAY_FILES_IN_STORAGE_FOLDER(project_root, storage_folders= [None], get_all= False):
+def GET_COMPRESSED_ARRAY_FILES_IN_STORAGE_FOLDER(storage_folders= None, get_all= False):
+    if storage_folders is None:
+        storage_folders = [storage_folders]
     folders = []
     for folder in storage_folders:
-        f = GET_ARRAY_STORAGE_FOLDER_PATH(project_root, folder_name= folder, get_all= get_all)
-        if isinstance(f, list):
-            folders.extend(f)
-        else:
-            folders.append(f)
-            
-    output = {}
+        f = GET_ARRAY_STORAGE_FOLDER_PATH(folder_name= folder, get_all= get_all)
+        folders.extend(f)
+    output = []
     for folder in folders:
-        output.update({folder : [file for file in os.listdir(folder) if file[file.rfind('.'):] in ARRAY_ADMISSIBLE_EXTENSIONS]})
+        for ext in ARRAY_ADMISSIBLE_EXTENSIONS:
+            array_storage_file = os.path.join(folder, GET_COMPRESSED_ARRAY_FILE_NAME + ext)
+            if os.path.exists(array_storage_file):
+                break
+        if os.path.isfile(array_storage_file):
+            output.append(array_storage_file)
     return output
     
-def CREATE_ARRAY_STORAGE_FOLDER(project_root):
+def CREATE_ARRAY_STORAGE_FOLDER():
     path = os.sep.join([
-        MAIN_ARRAY_STORAGE_FOLDER_PATH(project_root),
+        MAIN_ARRAY_STORAGE_FOLDER_PATH,
         ARRAY_STORAGE_FOLDER_PREFIX + datetime.now().strftime("%Y-%m-%d_%H-%M-%S")])
     os.makedirs(path, exist_ok=False)
     return path
 
-COMPRESSED_ARRAY_FILE_PREFIX = "ArrayStorageChunk_"
-CREATE_COMPRESSED_ARRAY_FILE_NAME = lambda index: COMPRESSED_ARRAY_FILE_PREFIX + str(index)
+GET_COMPRESSED_ARRAY_FILE_NAME = "ArrayStorage"
 
 
-MAX_ARRAY_SAVE_FILES = 20
+MAX_ARRAY_SAVE_FILES = 1
 
 MINIMUN_ARRAY_LENGTH = VARIABILITY.value["MINIMUN_ARRAY_LENGTH"]
 MAXIMUM_ARRAY_LENGTH = VARIABILITY.value["MAXIMUM_ARRAY_LENGTH"]
