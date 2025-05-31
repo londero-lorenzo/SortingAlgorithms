@@ -1,9 +1,7 @@
 from typing_extensions import override
 import numpy as np
 from Utils import ArrayStorageCompressor
-from Utils import Multiprocessing
 import os
-import threading
 
 def deep_compare(a, b):
     if isinstance(a, dict) and isinstance(b, dict):
@@ -298,33 +296,6 @@ class ArraySampleContainer(BaseDataDictionary):
             intervallDict.update({key: self.data[key]})
         return intervallDict
 
-        
-    """    
-    def getIndexOfKey(self, key):
-        keys = self.keys(toSort = True)
-        for i, k in enumerate(keys):
-            if k == key:
-                return i
-
-        raise IndexError(f"Could not found key with position '{index}', index out of range.\nKeys shape: [0,{len(keys)})")
-    """
-    """    
-    def getNumberOfElements(self, interval=None):
-        
-        Restituisce il numero totale di elementi (n * rep) delle voci nel range [0..N)
-        `interval` è un tuple (start, end) di indici sulle keys ordinate.
-        
-        keys = self.keys(toSort=True)
-        if interval is not None:
-            start, end = interval
-            keys = keys[start:end]
-    
-        total = 0
-        for k in keys:
-            info = self.data[k]
-            total += info["n"] * info["rep"]
-        return total
-    """
     def keys(self, toSort=True, interval=None):
         keys = list(self.data.keys())
     
@@ -363,53 +334,6 @@ class ArraySampleContainer(BaseDataDictionary):
 
 
 
-"""
-
-{
-    "chunk_1_id": [
-        { 
-            "data": [
-                data_1,
-                data_2,
-                ...,
-                data_n
-            ],
-            "key": "key",
-            "time": 0.0,
-            "function": function.__name__
-        },
-        { 
-            "data": [
-                data_1,
-                data_2,
-                ...,
-                data_n
-            ],
-            "key": "key",
-            "time": 0.0,
-            "function": function.__name__
-        },
-        ...
-        { 
-            "data": [
-                data_1,
-                data_2,
-                ...,
-                data_n
-            ],
-            "key": "key",
-            "time": 0.0,
-            "function": function.__name__
-        },
-    ],
-    "chunk_2_id":[
-    ...
-    ]
-    
-}
-
-"""
-
 def assert_execution_time_dict_metadata(raw_chunk_data):
     required_keys = {"data", "metadata"}
     
@@ -434,60 +358,62 @@ class ExecutionTimeDataStorage(BaseDataDictionary):
         super().__init__(initial_data)
 
 
-    def update(self, algorithm, array_folder, array_division, processes_number, execution_times):
-        self.get_multiprocessing_time_measurement_storage(
+    def update(self, algorithm, array_folder, execution_times):
+        self.get_execution_times(
             algorithm = algorithm, 
             array_folder = array_folder,
-            array_division = array_division,
-            processes_number = processes_number,
-            create = True,
             raise_error_if_not_exists = False
         ).extend(execution_times)
 
         
-    def get_multiprocessing_time_measurement_storage(self, algorithm, array_folder, array_division, processes_number, create= False, raise_error_if_not_exists= True):
-        self.ensure_existence(algorithm, array_folder, placeholder=[], raise_error_if_not_exists=raise_error_if_not_exists)
+    def get_execution_times(self, algorithm, array_folder= None, raise_error_if_not_exists= True):
+        if array_folder is None:
+            self.ensure_existence(algorithm, placeholder= [], raise_error_if_not_exists=raise_error_if_not_exists)
+            return self[algorithm]
+        else:
+            self.ensure_existence(algorithm, array_folder, placeholder=[], raise_error_if_not_exists=raise_error_if_not_exists)
+            return self[algorithm][array_folder]
+
+    def set_execution_times(self, algorithm, new_values, array_folder= None, raise_error_if_not_exists= True):
         
-        multiprocessing_time_measurement_storage_list = self[algorithm][array_folder]
-
-        for multiprocessing_time_measurement in multiprocessing_time_measurement_storage_list:
-            if multiprocessing_time_measurement.to_tuple() == (array_division, processes_number):
-                return multiprocessing_time_measurement
-
-        if not create:
-            if raise_error_if_not_exists:
-                raise ValueError(f"Unable to find time measurement using array division of {array_division} in {processes_number} processes.")
-            else:
-                return None
-
-        multiprocessing_time_measurement_storage_list.append(MultiprocessingTimeMeasurementStorage(array_division, processes_number))
-        return multiprocessing_time_measurement_storage_list[-1]
+        if array_folder is None:
+            self.ensure_existence(algorithm, placeholder=[], raise_error_if_not_exists=raise_error_if_not_exists)
+            self.data[algorithm] = new_values
+        else:
+            self.ensure_existence(algorithm, array_folder, placeholder=[], raise_error_if_not_exists=raise_error_if_not_exists)
+            self.data[algorithm][array_folder] = new_values
+        
 
     def merge(self, other):
         assert isinstance(other, (ExecutionTimeDataStorage, dict)), f"Expected ExecutionTimeDataStorage or dictionary, got {type(other)}"
 
-        
+        if isinstance(other, dict):
+            other = ExecutionTimeDataStorage(other)
         
         for other_algorithm, other_folders_dictionary in other.items():
             if other_algorithm not in self.data:
-                self.data[other_algorithm] = other_folders_dictionary
+                self.set_execution_times(other_algorithm, new_values= other_folders_dictionary)
                 continue
 
-            for other_folder_path, other_multiprocessing_measurement_list in other_folders_dictionary.items():
-                if other_folder_path not in self.data[other_algorithm]:
-                    self.data[other_algorithm][other_folder_path] = other_multiprocessing_measurement_list
+            for other_folder_path, other_execution_times_list in other_folders_dictionary.items():
+                if other_folder_path not in self.get_execution_times(other_algorithm):
+                    self.set_execution_times(other_algorithm, array_folder= other_folder_path, new_values= other_execution_times_list)
                     continue
-                assert isinstance(other_multiprocessing_measurement_list, list), f"Expected list, got {type(other_multiprocessing_measurement_list)}"
-                assert isinstance(self.data[other_algorithm][other_folder_path], list), f"Expected list, got {type(self.data[other_algorithm][other_folder_path])}"
-
+                assert isinstance(other_execution_times_list, list), f"Expected list, got {type(other_execution_times_list)}"
+                execution_times = self.get_execution_times(other_algorithm, other_folder_path)
+                other_execution_times = other.get_execution_times(other_algorithm, other_folder_path)
                 
-                for other_multiprocessing_measurement in other_multiprocessing_measurement_list:
-                    current_multiprocessing_measurement = self.get_multiprocessing_time_measurement_storage(other_algorithm, other_folder_path, *other_multiprocessing_measurement.to_tuple(), raise_error_if_not_exists= False)
-                    if current_multiprocessing_measurement is None:
-                        self.data[other_algorithm][other_folder_path].append(other_multiprocessing_measurement)
+                assert isinstance(execution_times, list), f"Expected list, got {type(execution_times)}"
+                assert len(execution_times) == len(other_execution_times), f"Expected same sample execution number, expected {len(execution_times)}, got {len(other_execution_times)}"
+                
+                for current_execution_time, other_execution_time in zip(execution_times, other_execution_times):
+                    assert isinstance(other_execution_time, ArrayExecutionTime), f"Expected ArrayExecutionTime, got {type(other_execution_time)}"
+        
+                    current_execution_time.extend(other_execution_time)
+                    self.compute_time_analysis()
 
-                    current_multiprocessing_measurement.merge(other_multiprocessing_measurement)
-
+    def to_dict(self):
+        return {alg: {storage: [ext_time.to_dict() for ext_time in ext_times] for storage, ext_times in storage_dict.items()} for alg, storage_dict in self.items()}
 #        for chunk_time in execution_times:
 
         
@@ -555,45 +481,6 @@ class ArrayExecutionTime(ArraySample):
     def get_time_analysis(self):
         return self.time_analysis
 
-class MultiprocessingTimeMeasurementStorage:
-    def __init__(self, array_division, processes_number):
-        self.execution_times = []
-        self.array_division = array_division
-        self.processes_number = processes_number
-
-    def add(self, array_execution_time: ArrayExecutionTime):
-        assert isinstance(array_execution_time, ArrayExecutionTime), f"Chunk row expected ArrayExecutionTime, got {type(array_execution_time)}"
-        self.execution_times.append(array_execution_time)
-
-    def extend(self, execution_times):
-        for execution_time in execution_times:
-            self.add(execution_time)
-
-    def to_tuple(self):
-        return self.array_division, self.processes_number
-
-    def has_same_measurement_approach(self, other):
-        assert isinstance(other, MultiprocessingTimeMeasurementStorage), f"Expected MultiprocessingTimeMeasurementStorage, got {type(other)}"
-
-        return self.array_division == other.array_division and self.processes_number == other.processes_number
-
-
-
-    def merge(self, other):
-        assert self.has_same_measurement_approach(other), f"Expected same measurement approach of {self.to_tuple()}, got {other.to_tuple()}"
-
-        assert len(self.execution_times) == len(other.execution_times), f"Expected same sample execution number, expected {len(self.execution_times)}, got {len(other.execution_times)}"
-
-        for current_execution_time, other_execution_time in zip(self.execution_times, other.execution_times):
-            assert isinstance(other_execution_time, ArrayExecutionTime), f"Expected ArrayExecutionTime, got {type(other_execution_time)}"
-
-            current_execution_time.extend(other_execution_time)
-            self.compute_time_analysis()
-
-    def to_dict(self):
-        return {self.to_tuple():
-                [execution_time.to_dict() for execution_time in self.execution_times]
-               }
         
 
 class FoldersDataStorage(BaseDataDictionary):
