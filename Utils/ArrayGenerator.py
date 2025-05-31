@@ -42,7 +42,7 @@ def sample(n, m, rep = 1, dtype= np.int64, seeds= None):
 
     return arraysGeneated
 
-    
+
 def initialize_creation_parameters_environment():
     seeds = []
     def parameters_create_function(index, parametric_value, generated_seeds):
@@ -56,7 +56,6 @@ def initialize_creation_parameters_environment():
                     current_seed = ArraySettings.CREATION_DETERMINISTIC_SEED(parametric_value+3*i + 5 *(index + t), index)
                     t+=1
             generated_seeds.append(current_seed)
-
 
         return n, m, rep, dtype, generated_seeds[len(seeds)-rep:]
 
@@ -75,18 +74,17 @@ def find_file(filename, search_root):
 
 
 def generate_array_by_generation_files(file_paths, args):
-
     destination_folder = args.output
     extension = ArrayStorageCompressor.COMPRESS_EXTENSION if args.compress else ArrayStorageCompressor.PICKABLE_EXTENSION
     
     if destination_folder and not os.path.isdir(destination_folder):
         raise FileNotFoundError(f"Selected destination folder was not found.")
     
-    file_generated_index = 0
+    file_generated_index = 0 if args.number > 1 else ""
     for generation_file_path in file_paths:
         if not args.output:
             destination_folder = os.path.dirname(generation_file_path)
-            file_generated_index = 0
+            file_generated_index = 0 if args.number > 1 else ""
         
         first_generated_name_temp = args.prefix + str(file_generated_index) + extension
         
@@ -138,7 +136,8 @@ def generate_array_by_generation_files(file_paths, args):
                 compress = args.compress
             )
             print(f"Generated array chunk was saved in: {file_path}")
-            file_generated_index += 1
+            if args.number > 1:
+                file_generated_index += 1
             
         print()
 
@@ -152,7 +151,7 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--file", help="Target file path, must be a json.", type=str, required=True)
     parser.add_argument("-o", "--output", help="Folder where the chunks array will be generetad.", type=str, default= None)
     parser.add_argument("-n", "--number", help="On how many files the array will be divided.", type=int, default = ArraySettings.MAX_ARRAY_SAVE_FILES)
-    parser.add_argument("-p", "--prefix", help="File name prefix for each generated file.", type= str, default = ArraySettings.COMPRESSED_ARRAY_FILE_PREFIX)
+    parser.add_argument("-p", "--prefix", help="File name prefix for each generated file.", type= str, default = ArraySettings.GET_COMPRESSED_ARRAY_FILE_NAME)
     parser.add_argument("-a", "--auto", help="Automatically generate the arrays by searching for the target file.", action='store_true')
     parser.add_argument("-s", "--searchFolder", help="Folder from which to search the target file (used with --auto).", type=str, default=".")
     parser.add_argument("-w", "--overwrite", help="Overwrites any existing files.", action='store_true')
