@@ -84,37 +84,32 @@ def measure(function, minTime, *args):
 
     
 ## function to measure sorting time for determinate array chunk
-def measureChunkPoolArray(chunk, function, minTime= None):
-    chunk_copy_comparison = copy.deepcopy(chunk)
-    chunk_copy = copy.deepcopy(chunk)
-    assert isinstance(chunk_copy, dict), f"Expected dict, got {type(chunk_copy)}"
-    result_poolDict = {}
-    
+def measure_container_array(array_sample_container, function, minTime= None):
+    array_sample_container_copy_comparison = copy.deepcopy(array_sample_container)
+    array_sample_container_copy = copy.deepcopy(array_sample_container)
+
     if minTime is None:
         minTime = SortingSettings.compute_min_time()
     
     [measure(function, minTime, [i for i in range(100)])]
-    
-    for chunk_id, array_sample_container in chunk_copy.items():
-        assert isinstance(array_sample_container, ArrayDataManager.ArraySampleContainer), f"Chunk element expected as ArraySampleContainer, got {type(array_sample_container)}"
-            
-        array_execution_times = []
-        for array_sample in array_sample_container.get_samples():
-            time_repetitions= []
-            
-            for data in array_sample.get_sample():
-                time_repetitions.append(measure(function, minTime, data))
-                     
-            array_execution_times.append(
-                ArrayDataManager.ArrayExecutionTime(
-                    variability = array_sample.get_variability(),
-                    execution_times = time_repetitions,
-                    creation_arguments = array_sample.get_creation_arguments()
-                )
-            )
+    assert isinstance(array_sample_container, ArrayDataManager.ArraySampleContainer), f"Chunk element expected as ArraySampleContainer, got {type(array_sample_container)}"
         
-        result_poolDict.update({chunk_id : array_execution_times})
-    assert ArrayDataManager.deep_compare(chunk, chunk_copy_comparison), f"Modification in array structure detected."
-    return result_poolDict
+    array_execution_times = []
+    for array_sample in array_sample_container_copy.get_samples():
+        time_repetitions= []
+        
+        for data in array_sample.get_sample():
+            time_repetitions.append(measure(function, minTime, data))
+                 
+        array_execution_times.append(
+            ArrayDataManager.ArrayExecutionTime(
+                variability = array_sample.get_variability(),
+                execution_times = time_repetitions,
+                creation_arguments = array_sample.get_creation_arguments()
+            )
+        )
+    
+    assert ArrayDataManager.deep_compare(array_sample_container.to_dict(), array_sample_container_copy_comparison.to_dict()), f"Modification in array structure detected."
+    return array_execution_times
 
     
