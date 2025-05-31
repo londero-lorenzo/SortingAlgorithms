@@ -10,6 +10,7 @@ from Utils.ArrayStorageCompressor import ARRAY_ADMISSIBLE_EXTENSIONS
 class Variability(Enum):
     onLength = dict(
         code = "N",
+        nice_name = "Array length",
         MINIMUN_ARRAY_LENGTH = 100,
         MAXIMUM_ARRAY_LENGTH = 10**5,
         MINIMUM_DIFFERENT_NUMBERS_IN_ARRAY = 10**5,
@@ -25,6 +26,7 @@ class Variability(Enum):
 
     onNumbers = dict(
         code = "M",
+        nice_name = "Different numbers",
         MINIMUN_ARRAY_LENGTH = 10**4,
         MAXIMUM_ARRAY_LENGTH = 10**4,
         MINIMUM_DIFFERENT_NUMBERS_IN_ARRAY = 10,
