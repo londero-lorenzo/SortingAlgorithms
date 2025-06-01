@@ -12,8 +12,7 @@ def copy_layout_settings(source_layout, target_keys):
     return source_layout.to_plotly_json()
 
 def combine(figures):
-    assert len(figures) % 2 == 0, f"Unpair figures detected. Found:\n{figures}"
-    assert len(figures) <= 4, f"Expected maximum 4 images, got {len(figures)}"
+    assert len(figures) == 4, f"Expected 4 images, got {len(figures)}"
     
     default_layout = figures[0]["layout"]
     fig_combined = make_subplots(
@@ -61,16 +60,22 @@ def combine(figures):
         
 
     fig_combined.update_xaxes(
-        title_text="Array length",
+        title = dict(
+            text = "Array length",
+            font=dict(size = 16)
+            ),
         type="linear",
         row=1,
         col=1,
     )
     fig_combined.update_xaxes(
-        title_text="Variance",
+        title = dict(
+                    text="Variance",
+                    font=dict(size = 16)
+            ),
         type="linear",
         row=1,
-        col=2,
+        col=2
     )
     
     n_traces_per_fig = [(f["layout"]["meta"]["scale"], len(f.data)) for f in figures]
@@ -116,12 +121,16 @@ def combine(figures):
     )
     
     fig_combined.update_layout(
+    
+        margin = dict(l=80, r=80, t=150, b=200),
+        height = 1920/2,
+        width = 1140*2,
         updatemenus=[
             dict(
                 type="buttons",
                 direction="right",
                 x=0.55,
-                y=-0.1,
+                y=-0.2,
                 showactive=True,
                 buttons=[button_linear, button_log],
             )
@@ -129,6 +138,7 @@ def combine(figures):
         title = dict(
             subtitle=dict(
                 text = "Run times grouped by sorting algorithm.",
+                font = dict(size=24)
             ),
         ),
         legend = dict(
@@ -138,9 +148,6 @@ def combine(figures):
             y=-0.2,
             x=0.5,
         ),
-        margin = dict(l=80, r=30, t=100, b=80),
-        height = 1920/2,
-        width = 1080*2,
     )
     
     return fig_combined
@@ -168,7 +175,136 @@ def show_figures(figures):
 def write_figures(figures, output, width = 1500, height = 900, scale = 4):
     fig = combine(figures)
     if ".html" in output:
-        fig.write_html(output, width = width, height = height, scale = scale)
+        fig.update_layout(
+            width =  1140*2 ,
+            height = 1100,
+            xaxis = dict(
+                title= dict(
+                standoff= 10
+                )
+            ),
+            margin = dict(l=80, r=80, t=150, b=200),
+            legend = dict(
+               title=dict(
+                    text="Algorithms",
+                    side="top"
+                ),
+                yanchor="bottom",
+                y=-0.18,
+                xanchor="center",
+                x=0.5,
+                font=dict(size=20), 
+                entrywidth = 140,
+                orientation = 'h'
+            ),
+            updatemenus = [
+                dict(
+                    pad=dict(r=20, l=20, t=20, b= 20)
+                )
+            ]
+        )
+        
+        html_str = fig.to_html(include_plotlyjs='cdn', full_html=True,  config={"responsive": True})
+        html_str = html_str.replace(
+                    "<body>",
+                    """
+                    <body>
+                    <style>
+                        body{
+                            margin: 0;
+                            padding: 0;
+                            width: 100% !important;
+                            height: 90% !important;
+                        }
+                        .updatemenu-header-group > g .updatemenu-item-rect {
+                            height: 36px !important;   
+                        }
+
+                        .updatemenu-item-text {
+                            font-size: 20px !important;
+                            dominant-baseline: middle;
+                        }
+                        
+                    </style>
+                    <script>
+                        function repositionButtons() {
+                            const buttons = document.querySelectorAll('.updatemenu-header-group .updatemenu-button');
+                            if (buttons.length === 0) {
+                                return;
+                            }
+
+                            const legend = document.querySelector('.infolayer .legend');
+                            if (!legend) {
+                                return;
+                            }
+
+                            const rect = legend.getBoundingClientRect();
+                            const bound_x = rect.width;
+                            const bound_y = rect.height;
+
+                            const raw_transform = legend.getAttribute("transform");
+                            if (!raw_transform) {
+                                return;
+                            }
+
+                            const coords = raw_transform
+                                .substring(raw_transform.indexOf("(") + 1, raw_transform.indexOf(")"))
+                                .split(',')
+                                .map(val => parseFloat(val.trim()));
+
+                            const [tx, ty] = coords;
+
+                            const spacing = 20;
+                            let totalWidth = 0;
+
+                            buttons.forEach((btn, i) => {
+                                const w = btn.getBBox().width;
+                                totalWidth += w;
+                            });
+                            totalWidth += spacing * (buttons.length - 1);
+
+                            const startX = tx + bound_x / 2 - totalWidth / 2;
+                            const y = ty + bound_y + bound_y / 2;
+
+                            let currentX = startX;
+                            buttons.forEach((btn, i) => {
+                                const btnWidth = btn.getBBox().width;
+                                const centerX = currentX;
+                                btn.setAttribute('transform', `translate(${centerX}, ${y})`);
+                                currentX += btnWidth + spacing;
+                            });
+                        }
+
+
+                        
+                        
+                        window.addEventListener("load", function () {
+                            repositionButtons();
+                            
+                            const plotContainer = document.querySelector('.main-svg');
+
+                            if (plotContainer) {
+                                const observer = new MutationObserver((mutationsList, observer) => {
+                                    repositionButtons();
+                                });
+
+                                observer.observe(plotContainer, {
+                                    childList: true,
+                                    subtree: true,
+                                });
+                            }
+                        
+                    
+                            
+                        });
+                    </script>
+                    """
+                )
+
+
+
+        with open(output, "w", encoding="utf-8") as f:
+            f.write(html_str)
     else:
         fig.write_image(output , width = width, height = height, scale = scale)
 
@@ -203,4 +339,4 @@ if __name__ == "__main__":
     if args.output is None:
         show_figures(figures)
     else:
-        write_figures(figures, output, width = 1500, height = 900, scale = 4)
+        write_figures(figures, args.output, width = 1500, height = 900, scale = 4)
