@@ -42,7 +42,7 @@ class Variability(Enum):
 
 ### ---- VARIABILITY CHANGE ----
 # change this in order to have variability on length of array or on the different numbers in array
-VARIABILITY = Variability.onLength
+VARIABILITY = Variability.onNumbers
 
 NUMBER_OF_SAMPLES = 100
 NUMBER_OF_REPETITIONS = 10
