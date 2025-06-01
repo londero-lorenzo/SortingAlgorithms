@@ -98,7 +98,7 @@ python3.11 setup.py
 
 ## Directory Structure
 - Only relevant files and folders are shown below for clarity.
-
+```
 SortingAlgorithms/
 ├─ Array/
 │  ├─ ArrayStorage/
@@ -123,7 +123,7 @@ SortingAlgorithms/
 │  ├─ ArrayGenerator.py         # Data generation logic
 │  ├─ ArraySettings.py          # Variability & file naming
 │  ├─ ArrayStorageCompressor.py # Saving file using ZPAQ + pickle
-│  ├─ TimingSettings.py         # minTime & error thresholds
+│  ├─ SortingSettings.py        # minTime & error thresholds
 │  └─ graph_viewer.py           # Interactive plot generator
 │                               
 ├─ docs/                        
@@ -135,3 +135,4 @@ SortingAlgorithms/
 ├─ start_venv.py			    # Launching virtual environment
 ├─ view_benchmarks.py	        # Launching graphical interaction
 └─ README.md
+```
