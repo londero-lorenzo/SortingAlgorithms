@@ -92,7 +92,7 @@ python3.11 setup.py
     - Supports both *length variability* and *number variability* modes.
 
 4. **View Interactive Graph (on GitHub Pages)**
-    Open [https://londero-lorenzo.github.io/SortingAlgorithms/benchmarks.html](https://londero-lorenzo.github.io/SortingAlgorithms/benchmarks.html) to explore the interactive benchmark visualizations.
+    - Open [https://londero-lorenzo.github.io/SortingAlgorithms/benchmarks.html](https://londero-lorenzo.github.io/SortingAlgorithms/benchmarks.html) to explore the interactive benchmark visualizations.
 
 ---
 
@@ -131,8 +131,8 @@ SortingAlgorithms/
 │                               
 ├─ create_sample_arrays.py      # CLI for data generation
 ├─ setup.py                     # Installation & dependency setup
-├─ start_jupyter.py			    # Launching jupyter lab
-├─ start_venv.py			    # Launching virtual environment
+├─ start_jupyter.py				# Launching jupyter lab
+├─ start_venv.py				# Launching virtual environment
 ├─ view_benchmarks.py	        # Launching graphical interaction
 └─ README.md
 ```
