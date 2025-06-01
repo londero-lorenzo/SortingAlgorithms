@@ -1,307 +1,219 @@
-import os
+import os, fnmatch
 import argparse
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
-from Utils import ArrayStorageCompressor
+import plotly.express as px
 from Utils.ArraySettings import Variability
-import fnmatch
-from copy import deepcopy
-import sys
+from Utils import ArrayStorageCompressor
 
-def copy_layout_settings(source_layout, target_keys):
-    return source_layout.to_plotly_json()
+def copy_layout_settings(layout, keys): return layout.to_plotly_json()
 
 def combine(figures):
     assert len(figures) == 4, f"Expected 4 images, got {len(figures)}"
     
     default_layout = figures[0]["layout"]
-    fig_combined = make_subplots(
-        rows=1,
-        cols=2,
-        shared_yaxes=True,
-        horizontal_spacing=0.10,
-        subplot_titles=("Array Length", "Number Variability"),
-    )
+    fig = make_subplots(rows=1, cols=2, shared_yaxes=False, shared_xaxes=False, horizontal_spacing=0.10)
     
     positions = {
-        Variability.onLength.value["nice_name"]: {
-            "linear":       (1, 1),
-            "logaritmic":   (1, 1)
-            },
-        Variability.onNumbers.value["nice_name"]:{
-            "linear":       (1, 2),
-            "logaritmic":   (1, 2)
-            }
+        Variability.onLength.value["nice_name"]: {"linear": (1, 1), "logaritmic": (1, 1)},
+        Variability.onNumbers.value["nice_name"]: {"linear": (1, 2), "logaritmic": (1, 2)}
     }
     
-    visible_by_default = [True, False, True, False]
-    
+    axes_ids = {
+        Variability.onLength.value["nice_name"]: {"linear": ('x', 'y'), "logaritmic": ('x2', 'y')},
+        Variability.onNumbers.value["nice_name"]: {"linear": ('x', 'y2'), "logaritmic": ('x2', 'y2')}
+    }
 
-
-    for idx, single_fig in enumerate(figures):
-        meta = single_fig["layout"]["meta"]
-        row, col = positions[meta["variability"]][meta["scale"]]
-        show_flag = visible_by_default[idx]
-        for trace in single_fig.data:
-            trace.visible = show_flag
-            fig_combined.add_trace(trace, row=row, col=col)
-            
-            
-    fig_combined.update_layout(
-        **copy_layout_settings(figures[0]["layout"], ["font"])
-    )
-
-    for col in range(2):
-        fig_combined.update_yaxes(
-            title_text="Time (s)",
-            row=1,
-            col=col+1,
-        )
-        
-
-    fig_combined.update_xaxes(
-        title = dict(
-            text = "Array length",
-            font=dict(size = 16)
-            ),
-        type="linear",
-        row=1,
-        col=1,
-    )
-    fig_combined.update_xaxes(
-        title = dict(
-                    text="Variance",
-                    font=dict(size = 16)
-            ),
-        type="linear",
-        row=1,
-        col=2
-    )
-    
-    n_traces_per_fig = [(f["layout"]["meta"]["scale"], len(f.data)) for f in figures]
-    
+    visible_by_default = {"linear": True, "logaritmic": False}
     vis_linear = []
-    vis_log = []
-    for scale, count in n_traces_per_fig:
-        if scale == "linear":
-            vis_linear += [True]  * count
-            vis_log    += [False] * count
-        else:
-            vis_linear += [False] * count
-            vis_log    += [True]  * count
 
+    for single_fig in figures:
+        meta = single_fig["layout"]["meta"]
+        v, scale = meta["variability"], meta["scale"]
+        (row, col), (xid, yid), vis = positions[v][scale], axes_ids[v][scale], visible_by_default[scale]
+        for t in single_fig.data:
+            t.update(xaxis=xid, yaxis=yid, visible=vis)
+            fig.add_trace(t, row=row, col=col)
+            vis_linear.append(vis)
 
-    button_linear = dict(
-        label="Linear scale",
-        method="update",
-        args=[
-            {"visible": vis_linear},
-            {
-                "xaxis":  {"type": "linear", "title": "Array length"},
-                "xaxis2": {"type": "linear", "title": "Number variance"},
-            },
-        ],
+    fig.update_layout(**copy_layout_settings(default_layout, ["font"]))
+    for col in range(2):
+        fig.update_yaxes(title=dict(text="Time (s)", font=dict(size=20)), row=1, col=col + 1)
+
+    fig.update_xaxes(type="linear", title=dict(font=dict(size=20)))
+    fig.update_xaxes(title=dict(text="Array length"), row=1, col=1)
+    fig.update_xaxes(title=dict(text="Variance"), row=1, col=2)
+
+    fig.update_xaxes(hoverformat=".5s")
+
+    fig.update_layout(
+        margin=dict(l=80, r=80, t=150, b=200),
+        height=960,
+        width=2280,
+        hovermode="x unified",
+        title=dict(subtitle=dict(text="Run times grouped by sorting algorithm.", font=dict(size=24))),
+        legend=dict(orientation="h", yanchor="bottom", xanchor="center", y=-0.2, x=0.5, groupclick='togglegroup'),
+        updatemenus=[dict(
+            type="buttons",
+            direction="right",
+            x=0.55, y=-0.2,
+            showactive=True,
+            buttons=[
+                dict(label="Linear scale", method="relayout", args=[{
+                    "xaxis.type": "linear", "xaxis2.type": "linear",
+                    "xaxis.title": "Array length", "xaxis2.title": "Number variance",
+                    "yaxis.type": "linear", "yaxis2.type": "linear",
+                    "yaxis.title": "Time (s)", "yaxis2.title": "Time (s)"
+                }]),
+                dict(label="Logaritmic scale", method="relayout", args=[{
+                    "xaxis.type": "log", "xaxis2.type": "log",
+                    "xaxis.title": "Array length (log)", "xaxis2.title": "Number variance (log)",
+                    "yaxis.type": "log", "yaxis2.type": "log",
+                    "yaxis.title": "Time (log(s))", "yaxis2.title": "Time (log(s))"
+                }])
+            ]
+        )]
     )
 
-    button_log = dict(
-        label="Logaritmic scale",
-        method="update",
-        args=[
-            {"visible": vis_log},
-            {
-                "xaxis":  {"type": "log", "title": "Array length (log)"},
-                "xaxis2": {"type": "log", "title": "Number variance (log)"},
-            },
-        ],
+    # Legend grouping
+    for trace in fig.data:
+        trace.legendgroup = trace.name
+
+    for alg in set(t.name for t in fig.data):
+        traces = [t for t in fig.data if t.name == alg]
+        for i, t in enumerate(traces):
+            t.showlegend = (i == 0)
+
+    # Coloring
+    palette = px.colors.qualitative.Plotly
+    alg_colors = {alg: palette[i % len(palette)] for i, alg in enumerate(sorted(set(t.name for f in figures for t in f.data)))}
+
+    for t in fig.data:
+        c = alg_colors.get(t.name, "#000")
+        if hasattr(t, 'marker') and hasattr(t.marker, 'color'):
+            t.marker.color = c
+        if hasattr(t, 'line') and hasattr(t.line, 'color'):
+            t.line.color = c
+
+    # Vertical separator
+    fig.add_shape(
+        type="line", x0=0.5, x1=0.5, y0=0, y1=1,
+        xref="paper", yref="paper",
+        line=dict(color="LightGray", width=2, dash="dash"),
     )
     
-    
-    fig_combined.update_xaxes(
-        hoverformat = ".5s"
-    )
-    
-    fig_combined.update_layout(
-    
-        margin = dict(l=80, r=80, t=150, b=200),
-        height = 1920/2,
-        width = 1140*2,
-        updatemenus=[
-            dict(
-                type="buttons",
-                direction="right",
-                x=0.55,
-                y=-0.2,
-                showactive=True,
-                buttons=[button_linear, button_log],
-            )
-        ],
-        title = dict(
-            subtitle=dict(
-                text = "Run times grouped by sorting algorithm.",
-                font = dict(size=24)
-            ),
-        ),
-        legend = dict(
-            orientation="h",
-            yanchor="bottom",
-            xanchor="center",
-            y=-0.2,
-            x=0.5,
-        ),
-    )
-    
-    return fig_combined
-
-
-
-
+    return fig
 
 def find_file(filename, search_root):
-    matches = []
-
-    for root, dirs, files in os.walk(search_root):
-        for file in files:
-            if fnmatch.fnmatch(file, filename):
-                full_path = os.path.join(root, file)
-                matches.append(full_path)
-    return matches
-    
-
+    return [os.path.join(r, f) for r, _, fs in os.walk(search_root) for f in fs if fnmatch.fnmatch(f, filename)]
 
 def show_figures(figures):
+    combine(figures).show()
+
+def write_figures(figures, output, width=1500, height=900, scale=4):
     fig = combine(figures)
-    fig.show()
-    
-def write_figures(figures, output, width = 1500, height = 900, scale = 4):
-    fig = combine(figures)
-    if ".html" in output:
+    if output.endswith(".html"):
         fig.update_layout(
-            width =  1140*2 ,
-            height = 1100,
-            xaxis = dict(
-                title= dict(
-                standoff= 10
-                )
+            width=2280, height=1100,
+            margin=dict(l=80, r=80, t=150, b=200),
+            xaxis=dict(title=dict(standoff=10)),
+            legend=dict(
+                title=dict(text="Algorithms", side="top"),
+                yanchor="bottom", y=-0.18,
+                xanchor="center", x=0.5,
+                font=dict(size=20), entrywidth=140, orientation='h'
             ),
-            margin = dict(l=80, r=80, t=150, b=200),
-            legend = dict(
-               title=dict(
-                    text="Algorithms",
-                    side="top"
-                ),
-                yanchor="bottom",
-                y=-0.18,
-                xanchor="center",
-                x=0.5,
-                font=dict(size=20), 
-                entrywidth = 140,
-                orientation = 'h'
-            ),
-            updatemenus = [
-                dict(
-                    pad=dict(r=20, l=20, t=20, b= 20)
-                )
-            ]
+            updatemenus=[dict(pad=dict(r=20, l=20, t=20, b=20))]
         )
-        
-        html_str = fig.to_html(include_plotlyjs='cdn', full_html=True,  config={"responsive": True})
+
+        html_str = fig.to_html(include_plotlyjs='cdn', full_html=True, config={"responsive": True})
         html_str = html_str.replace(
-                    "<body>",
-                    """
-                    <body>
-                    <style>
-                        body{
-                            margin: 0;
-                            padding: 0;
-                            width: 100% !important;
-                            height: 90% !important;
-                        }
-                        .updatemenu-header-group > g .updatemenu-item-rect {
-                            height: 36px !important;   
-                        }
+            "<body>",
+            """
+            <body>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 0;
+                    width: 100% !important;
+                    height: 90% !important;
+                }
 
-                        .updatemenu-item-text {
-                            font-size: 20px !important;
-                            dominant-baseline: middle;
-                        }
-                        
-                    </style>
-                    <script>
-                        function repositionButtons() {
-                            const buttons = document.querySelectorAll('.updatemenu-header-group .updatemenu-button');
-                            if (buttons.length === 0) {
-                                return;
-                            }
+                .updatemenu-header-group > g .updatemenu-item-rect {
+                    height: 36px !important;
+                }
 
-                            const legend = document.querySelector('.infolayer .legend');
-                            if (!legend) {
-                                return;
-                            }
+                .updatemenu-item-text {
+                    font-size: 20px !important;
+                    dominant-baseline: middle;
+                }
+            </style>
+            <script>
+                function repositionButtons() {
+                    const buttons = document.querySelectorAll('.updatemenu-header-group .updatemenu-button');
+                    if (buttons.length === 0) {
+                        return;
+                    }
 
-                            const rect = legend.getBoundingClientRect();
-                            const bound_x = rect.width;
-                            const bound_y = rect.height;
+                    const legend = document.querySelector('.infolayer .legend');
+                    if (!legend) {
+                        return;
+                    }
 
-                            const raw_transform = legend.getAttribute("transform");
-                            if (!raw_transform) {
-                                return;
-                            }
+                    const rect = legend.getBoundingClientRect();
+                    const bound_x = rect.width;
+                    const bound_y = rect.height;
 
-                            const coords = raw_transform
-                                .substring(raw_transform.indexOf("(") + 1, raw_transform.indexOf(")"))
-                                .split(',')
-                                .map(val => parseFloat(val.trim()));
+                    const raw_transform = legend.getAttribute("transform");
+                    if (!raw_transform) {
+                        return;
+                    }
 
-                            const [tx, ty] = coords;
+                    const coords = raw_transform
+                        .substring(raw_transform.indexOf("(") + 1, raw_transform.indexOf(")"))
+                        .split(',')
+                        .map(val => parseFloat(val.trim()));
 
-                            const spacing = 20;
-                            let totalWidth = 0;
+                    const [tx, ty] = coords;
 
-                            buttons.forEach((btn, i) => {
-                                const w = btn.getBBox().width;
-                                totalWidth += w;
-                            });
-                            totalWidth += spacing * (buttons.length - 1);
+                    const spacing = 20;
+                    let totalWidth = 0;
 
-                            const startX = tx + bound_x / 2 - totalWidth / 2;
-                            const y = ty + bound_y + bound_y / 2;
+                    buttons.forEach((btn) => {
+                        const w = btn.getBBox().width;
+                        totalWidth += w;
+                    });
+                    totalWidth += spacing * (buttons.length - 1);
 
-                            let currentX = startX;
-                            buttons.forEach((btn, i) => {
-                                const btnWidth = btn.getBBox().width;
-                                const centerX = currentX;
-                                btn.setAttribute('transform', `translate(${centerX}, ${y})`);
-                                currentX += btnWidth + spacing;
-                            });
-                        }
+                    const startX = tx + bound_x / 2 - totalWidth / 2;
+                    const y = ty + bound_y + bound_y / 2;
 
+                    let currentX = startX;
+                    buttons.forEach((btn) => {
+                        const btnWidth = btn.getBBox().width;
+                        btn.setAttribute('transform', `translate(${currentX}, ${y})`);
+                        currentX += btnWidth + spacing;
+                    });
+                }
 
-                        
-                        
-                        window.addEventListener("load", function () {
+                window.addEventListener("load", function () {
+                    repositionButtons();
+
+                    const plotContainer = document.querySelector('.main-svg');
+                    if (plotContainer) {
+                        const observer = new MutationObserver(() => {
                             repositionButtons();
-                            
-                            const plotContainer = document.querySelector('.main-svg');
-
-                            if (plotContainer) {
-                                const observer = new MutationObserver((mutationsList, observer) => {
-                                    repositionButtons();
-                                });
-
-                                observer.observe(plotContainer, {
-                                    childList: true,
-                                    subtree: true,
-                                });
-                            }
-                        
-                    
-                            
                         });
-                    </script>
-                    """
-                )
 
-
+                        observer.observe(plotContainer, {
+                            childList: true,
+                            subtree: true,
+                        });
+                    }
+                });
+            </script>
+            """
+        )
 
         with open(output, "w", encoding="utf-8") as f:
             f.write(html_str)
