@@ -410,7 +410,7 @@ class ExecutionTimeDataStorage(BaseDataDictionary):
                     assert isinstance(other_execution_time, ArrayExecutionTime), f"Expected ArrayExecutionTime, got {type(other_execution_time)}"
         
                     current_execution_time.extend(other_execution_time)
-                    self.compute_time_analysis()
+                    current_execution_time.compute_time_analysis()
 
     def to_dict(self):
         return {alg: {storage: [ext_time.to_dict() for ext_time in ext_times] for storage, ext_times in storage_dict.items()} for alg, storage_dict in self.items()}
