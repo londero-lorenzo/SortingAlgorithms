@@ -108,10 +108,16 @@ def find_file(filename, search_root):
     return [os.path.join(r, f) for r, _, fs in os.walk(search_root) for f in fs if fnmatch.fnmatch(f, filename)]
 
 def show_figures(figures):
-    combine(figures).show()
+    if len(figures) > 1:
+        combine(figures).show()
+    else:
+        figures.pop().show()
 
 def write_figures(figures, output, width=1500, height=900, scale=4):
-    fig = combine(figures)
+    if len(figures) > 1:
+        fig = combine(figures)
+    else:
+        fig = figures.pop()
     if output.endswith(".html"):
         fig.update_layout(
             width=2280, height=1100,
@@ -127,93 +133,94 @@ def write_figures(figures, output, width=1500, height=900, scale=4):
         )
 
         html_str = fig.to_html(include_plotlyjs='cdn', full_html=True, config={"responsive": True})
-        html_str = html_str.replace(
-            "<body>",
-            """
-            <body>
-            <style>
-                body {
-                    margin: 0;
-                    padding: 0;
-                    width: 100% !important;
-                    height: 90% !important;
-                }
-
-                .updatemenu-header-group > g .updatemenu-item-rect {
-                    height: 36px !important;
-                }
-
-                .updatemenu-item-text {
-                    font-size: 20px !important;
-                    dominant-baseline: middle;
-                }
-            </style>
-            <script>
-                function repositionButtons() {
-                    const buttons = document.querySelectorAll('.updatemenu-header-group .updatemenu-button');
-                    if (buttons.length === 0) {
-                        return;
+        if figures:
+            html_str = html_str.replace(
+                "<body>",
+                """
+                <body>
+                <style>
+                    body {
+                        margin: 0;
+                        padding: 0;
+                        width: 100% !important;
+                        height: 90% !important;
                     }
 
-                    const legend = document.querySelector('.infolayer .legend');
-                    if (!legend) {
-                        return;
+                    .updatemenu-header-group > g .updatemenu-item-rect {
+                        height: 36px !important;
                     }
 
-                    const rect = legend.getBoundingClientRect();
-                    const bound_x = rect.width;
-                    const bound_y = rect.height;
-
-                    const raw_transform = legend.getAttribute("transform");
-                    if (!raw_transform) {
-                        return;
+                    .updatemenu-item-text {
+                        font-size: 20px !important;
+                        dominant-baseline: middle;
                     }
+                </style>
+                <script>
+                    function repositionButtons() {
+                        const buttons = document.querySelectorAll('.updatemenu-header-group .updatemenu-button');
+                        if (buttons.length === 0) {
+                            return;
+                        }
 
-                    const coords = raw_transform
-                        .substring(raw_transform.indexOf("(") + 1, raw_transform.indexOf(")"))
-                        .split(',')
-                        .map(val => parseFloat(val.trim()));
+                        const legend = document.querySelector('.infolayer .legend');
+                        if (!legend) {
+                            return;
+                        }
 
-                    const [tx, ty] = coords;
+                        const rect = legend.getBoundingClientRect();
+                        const bound_x = rect.width;
+                        const bound_y = rect.height;
 
-                    const spacing = 20;
-                    let totalWidth = 0;
+                        const raw_transform = legend.getAttribute("transform");
+                        if (!raw_transform) {
+                            return;
+                        }
 
-                    buttons.forEach((btn) => {
-                        const w = btn.getBBox().width;
-                        totalWidth += w;
-                    });
-                    totalWidth += spacing * (buttons.length - 1);
+                        const coords = raw_transform
+                            .substring(raw_transform.indexOf("(") + 1, raw_transform.indexOf(")"))
+                            .split(',')
+                            .map(val => parseFloat(val.trim()));
 
-                    const startX = tx + bound_x / 2 - totalWidth / 2;
-                    const y = ty + bound_y + bound_y / 2;
+                        const [tx, ty] = coords;
 
-                    let currentX = startX;
-                    buttons.forEach((btn) => {
-                        const btnWidth = btn.getBBox().width;
-                        btn.setAttribute('transform', `translate(${currentX}, ${y})`);
-                        currentX += btnWidth + spacing;
-                    });
-                }
+                        const spacing = 20;
+                        let totalWidth = 0;
 
-                window.addEventListener("load", function () {
-                    repositionButtons();
-
-                    const plotContainer = document.querySelector('.main-svg');
-                    if (plotContainer) {
-                        const observer = new MutationObserver(() => {
-                            repositionButtons();
+                        buttons.forEach((btn) => {
+                            const w = btn.getBBox().width;
+                            totalWidth += w;
                         });
+                        totalWidth += spacing * (buttons.length - 1);
 
-                        observer.observe(plotContainer, {
-                            childList: true,
-                            subtree: true,
+                        const startX = tx + bound_x / 2 - totalWidth / 2;
+                        const y = ty + bound_y + bound_y / 2;
+
+                        let currentX = startX;
+                        buttons.forEach((btn) => {
+                            const btnWidth = btn.getBBox().width;
+                            btn.setAttribute('transform', `translate(${currentX}, ${y})`);
+                            currentX += btnWidth + spacing;
                         });
                     }
-                });
-            </script>
-            """
-        )
+
+                    window.addEventListener("load", function () {
+                        repositionButtons();
+
+                        const plotContainer = document.querySelector('.main-svg');
+                        if (plotContainer) {
+                            const observer = new MutationObserver(() => {
+                                repositionButtons();
+                            });
+
+                            observer.observe(plotContainer, {
+                                childList: true,
+                                subtree: true,
+                            });
+                        }
+                    });
+                </script>
+                """
+            )
 
         with open(output, "w", encoding="utf-8") as f:
             f.write(html_str)
@@ -243,7 +250,7 @@ if __name__ == "__main__":
             figures.append(figure)
             
     else:
-        figure = ArrayStorageCompressor.readFromFile(figure_path)
+        figure = ArrayStorageCompressor.readFromFile(args.file)
         assert isinstance(figure, go.Figure), f"Imported file must be a plotly.graph_objects.Figure object"
         figures.append(figure)
         
