@@ -90,23 +90,49 @@ class BaseDataDictionary:
 """
 
 class ArraySampleCreationArguments:
-    def __init__(self, n, m, rep, seeds, dtype):
-        if not isinstance(n, int) or n <= 0:
+    _ordered_keys = ["n", "m", "rep", "seeds", "dtype"]
+    def __init__(self, n = None, m = None, rep = None, seeds = None, dtype = None):
+        self.n = None
+        self.m = None
+        self.rep = None
+        self.seeds = None
+        self.dtype = None
+        if n:
+            self.set_length(n)
+        if m:
+            self.set_number_variability(m)
+        if rep:
+            self.set_repetitions(rep)
+        if seeds:
+            self.set_generation_seeds(seeds)
+        if dtype:
+            self.set_data_type(dtype)
+
+    def set_length(self, n):
+        if not isinstance(n, (int, np.integer)) or n <= 0:
             raise ValueError(f"Field 'n' must be a positive integer.")
-        if not isinstance(m, int) or m <= 0:
+        self.n = int(n)
+
+    def set_number_variability(self, m):
+        if not isinstance(m, (int, np.integer)) or m <= 0:
             raise ValueError(f"Field 'm' must be a positive integer.")
-        if not isinstance(rep, int) or rep <= 0:
+        self.m = int(m)
+
+    def set_repetitions(self, rep):
+        if not isinstance(rep, (int, np.integer)) or rep <= 0:
             raise ValueError(f"Field 'rep' must be a positive integer.")
+        self.rep = int(rep)
+
+    def set_generation_seeds(self, seeds):
         if not isinstance(seeds, list) or not seeds:
-            raise ValueError(f"Field 'seeds' must be a non-negative integer.")
+            raise ValueError(f"Field 'seeds' must be a list of seeds.")
+        self.seeds = seeds
+
+    def set_data_type(self, dtype):
         try:
             np.dtype(dtype)
         except Exception:
             raise TypeError(f"Field 'dtype' is not a valid numpy dtype.")
-        self.n = n
-        self.m = m
-        self.rep = rep
-        self.seeds = seeds
         self.dtype = np.dtype(dtype)
 
     
@@ -133,24 +159,105 @@ class ArraySampleCreationArguments:
         return not self.__eq__(other)
 
     def __str__(self):
-        return f"length: {self.get_length()}, number variability: {self.get_number_variability()}, "\
-        f"repetitions: {self.get_repetitions()}, seeds: {self.get_generation_seeds()}, dtype: {self.get_data_type()}"
+        return(
+            f"length: {self.n}, number variability: {self.m}, "
+            f"repetitions: {self.rep}, seeds: {self.seeds}, dtype: {self.dtype}"
+        )
 
     def to_dict(self, as_json=False):
-        return {
-            "n": self.n,
-            "m": self.m,
-            "rep": self.rep,
-            "seeds": self.seeds,
-            "dtype": self.dtype if not as_json else str(self.dtype)
-        }
+        base = {}
+        for key in self._ordered_keys:
+            attr = getattr(self, key, None)
+            base[key] = str(attr) if as_json and key == "dtype" else attr
+        return base
 
     def __hash__(self):
         return hash(tuple(self.to_dict()))
+
+    def __repr__(self):
+        args = ', '.join(f"{k}={getattr(self, k)}" for k in self._ordered_keys)
+        return f"{self.__class__.__name__}({args})"
     
 
-class ArraySample:
+class ArraySampleCreationArgumentsBuilder:
+    _variabilities = {
+        "onLength": ArraySampleCreationArguments,
+        "onNumbers": ArraySampleCreationArguments
+    }
+    
+    def __init__(self, variability):
+        self._data = {
+            "n": None,
+            "m": None,
+            "rep": None,
+            "seeds": None,
+            "dtype": None
+        }
+        if variability in self._variabilities:
+            self.creation_arguments = self._variabilities[variability]
+        else:
+            raise ValueError(f"Unable to find specific variability {variability}, available: {self._variabilities}")
 
+    def set_length(self, n):
+        if not isinstance(n, (int, np.integer)) or n <= 0:
+            raise ValueError(f"Field 'n' must be a positive integer.")
+        self._data["n"] = int(n)
+        return self
+
+    def set_number_variability(self, m):
+        if not isinstance(m, (int, np.integer)) or m <= 0:
+            raise ValueError(f"Field 'm' must be a positive integer.")
+        self._data["m"] = int(m)
+        return self
+
+    def set_repetitions(self, rep):
+        if not isinstance(rep, (int, np.integer)) or rep <= 0:
+            raise ValueError(f"Field 'rep' must be a positive integer.")
+        self._data["rep"] = int(rep)
+        return self
+
+    def set_generation_seeds(self, seeds):
+        if not isinstance(seeds, list):
+            raise ValueError(f"Field 'seeds' must be a list of seeds.")
+        self._data["seeds"] = seeds
+        return self
+
+    def set_data_type(self, dtype):
+        try:
+            self._data["dtype"] = np.dtype(dtype)
+        except Exception:
+            raise TypeError(f"Field 'dtype' is not a valid numpy dtype.")
+        return self
+
+    def build(self):
+        return self.creation_arguments(**self._data)
+
+    def to_dict(self, as_json=False):
+        out = self._data.copy()
+        if as_json:
+            out["dtype"] = str(out["dtype"])
+        return out
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __str__(self):
+        return str(self.to_dict())
+
+    def __repr__(self):
+        args = ', '.join(f"{k}={getattr(self, k)}" for k in self.data.keys())
+        return f"{self.__class__.__name__}({args})"
+
+    
+    def builder_on_length(n, m):
+        return ArraySampleCreationArgumentsBuilder("onLength").set_length(n).set_number_variability(m)
+
+    def builder_on_numbers(n, m):
+        return ArraySampleCreationArgumentsBuilder("onNumbers").set_length(n).set_number_variability(m)
+
+
+        
+class ArraySample:
     def __init__(self, sample: list, creation_arguments: ArraySampleCreationArguments, variability):
         assert isinstance(sample, list), f"Expected list, got {type(sample)}."
         assert isinstance(creation_arguments, (dict, ArraySampleCreationArguments)), f"Creation arguments are expected as ArraySampleCreationArguments or dict, got {type(creation_arguments)}."
@@ -169,8 +276,8 @@ class ArraySample:
         return self.variability
 
     ## {"sample": [[23, 12, ..., 32, 12], [...], ..., [...],  }
-    def __str__(self):
-        return f"sample:\n{np.array2string(np.array(self.get_sample()), threshold=99)}, "\
+    def __str__(self, short= False):
+        return f"sample:\n{np.array2string(np.array(self.get_sample()), threshold=99) if short else self.get_sample()}, "\
         f"\ncreation arguments:\n{str(self.get_creation_arguments())}, "\
         f"\nvariability: {self.get_variability()}"
 
