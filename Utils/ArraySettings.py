@@ -5,6 +5,7 @@ from enum import Enum
 import time
 from Utils import ArrayCalculateTypes
 from Utils.ArrayStorageCompressor import ARRAY_ADMISSIBLE_EXTENSIONS
+from Utils import ArrayDataManager
 
 
 class Variability(Enum):
@@ -20,7 +21,10 @@ class Variability(Enum):
         ARRAY_START_KEY = "MINIMUN_ARRAY_LENGTH",
         ARRAY_END_KEY = "MAXIMUM_ARRAY_LENGTH",
         ## arguments order: array length, array number variability
-        CREATION_ARRAY_ARGUMENTS = lambda variability_number: (variability_number, Variability.onLength.value["MAXIMUM_DIFFERENT_NUMBERS_IN_ARRAY"])
+        CREATION_ARRAY_ARGUMENTS = lambda variability_number: ArrayDataManager.ArraySampleCreationArgumentsBuilder.builder_on_length(
+            n = variability_number,
+            m = Variability.onLength.value["MAXIMUM_DIFFERENT_NUMBERS_IN_ARRAY"]
+        )
         
     )
 
@@ -36,9 +40,11 @@ class Variability(Enum):
         ARRAY_START_KEY = "MINIMUM_DIFFERENT_NUMBERS_IN_ARRAY",
         ARRAY_END_KEY = "MAXIMUM_DIFFERENT_NUMBERS_IN_ARRAY",
         ## arguments order: array length, array number variability
-        CREATION_ARRAY_ARGUMENTS = lambda variability_number: (Variability.onNumbers.value["MAXIMUM_ARRAY_LENGTH"], variability_number)
+        CREATION_ARRAY_ARGUMENTS = lambda variability_number: ArrayDataManager.ArraySampleCreationArgumentsBuilder.builder_on_numbers(
+            n = Variability.onNumbers.value["MAXIMUM_ARRAY_LENGTH"],
+            m = variability_number
+        )
     )
-
 
 ### ---- VARIABILITY CHANGE ----
 # change this in order to have variability on length of array or on the different numbers in array
@@ -122,8 +128,9 @@ ARRAY_DATATYPE = ArrayCalculateTypes.calculateMinimumExpensiveArrayType(MAX_NUMB
 
 # argument order: array length, array number variability, array repetition based on VARIABILITY, dtype
 def CREATION_ARRAY_ARGUMENTS(variability_number):
-    n, m, rep, dtype = (*VARIABILITY.value["CREATION_ARRAY_ARGUMENTS"](variability_number), NUMBER_OF_REPETITIONS, ARRAY_DATATYPE)
-    return int(n), int(m), int(rep), dtype
+    
+    builder = VARIABILITY.value["CREATION_ARRAY_ARGUMENTS"](variability_number).set_repetitions(NUMBER_OF_REPETITIONS).set_data_type(ARRAY_DATATYPE)
+    return builder
 
 CREATION_DETERMINISTIC_SEED = lambda key, index, repetition: int(100 + key * NUMBER_OF_REPETITIONS + index + repetition + (time.time()*1000) % 100000) % (2**32 - 1) 
 
