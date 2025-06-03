@@ -10,6 +10,7 @@ from Utils import ArrayDataManager
 
 class Variability(Enum):
     onLength = dict(
+        enable_geometric_serie = True,
         code = "N",
         nice_name = "Array length",
         MINIMUN_ARRAY_LENGTH = 100,
@@ -29,6 +30,7 @@ class Variability(Enum):
     )
 
     onNumbers = dict(
+        enable_geometric_serie = True,
         code = "M",
         nice_name = "Different numbers",
         MINIMUN_ARRAY_LENGTH = 10**4,
@@ -46,11 +48,33 @@ class Variability(Enum):
         )
     )
 
+    onDigitRange = dict(
+        enable_geometric_serie = False,
+        code = "D",
+        nice_name = "Digit range",
+        MINIMUN_ARRAY_LENGTH = 10**4,
+        MAXIMUM_ARRAY_LENGTH = 10**4,
+            
+        MINIMUM_DIGIT_POWER = 1,
+        MAXIMUM_DIGIT_POWER = 8,
+
+        MINIMUM_DIFFERENT_NUMBERS_IN_ARRAY = 10**1,
+        MAXIMUM_DIFFERENT_NUMBERS_IN_ARRAY = 10**8,
+        
+        ARRAY_START_KEY = "MINIMUM_DIGIT_POWER",
+        ARRAY_END_KEY = "MAXIMUM_DIGIT_POWER",
+        ## arguments order: array length, array number variability
+        CREATION_ARRAY_ARGUMENTS = lambda variability_number: ArrayDataManager.ArraySampleCreationArgumentsBuilder.builder_on_digits(
+            n = Variability.onNumbers.value["MAXIMUM_ARRAY_LENGTH"],
+            d = variability_number
+        )
+    )
+
 ### ---- VARIABILITY CHANGE ----
 # change this in order to have variability on length of array or on the different numbers in array
-VARIABILITY = Variability.onNumbers
+VARIABILITY = Variability.onDigitRange
 
-NUMBER_OF_SAMPLES = 100
+NUMBER_OF_SAMPLES = 7
 NUMBER_OF_REPETITIONS = 10
 ###
 
