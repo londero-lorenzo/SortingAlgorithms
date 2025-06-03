@@ -43,23 +43,30 @@ def sample(n, m, rep = 1, dtype= np.int64, seeds= None):
     return arraysGeneated
 
 
-def initialize_creation_parameters_environment():
-    seeds = []
-    def parameters_create_function(index, parametric_value, generated_seeds):
-        n, m, rep, dtype = ArraySettings.CREATION_ARRAY_ARGUMENTS(parametric_value)
+def setup_parameter_builder_environment():
+    used_seeds = []
+
+    def build_array_parameters(index, param_value, seed_pool):
+        builder = ArraySettings.CREATION_ARRAY_ARGUMENTS(param_value)
+        rep = builder.to_dict()["rep"]
+
         for r in range(rep):
-            current_seed = ArraySettings.CREATION_DETERMINISTIC_SEED(parametric_value, index, r)
-            if current_seed in generated_seeds:
-                print("[Warning] Seed {} already used at iteration {}.".format(current_seed, index))
+            seed = ArraySettings.CREATION_DETERMINISTIC_SEED(param_value, index, r)
+
+            if seed in seed_pool:
+                print(f"[Warning] Seed {seed} already used at iteration {index}.")
                 t = 1
-                while current_seed in seeds:
-                    current_seed = ArraySettings.CREATION_DETERMINISTIC_SEED(parametric_value+3*i + 5 *(index + t), index)
-                    t+=1
-            generated_seeds.append(current_seed)
+                while seed in seed_pool:
+                    seed = ArraySettings.CREATION_DETERMINISTIC_SEED(param_value + 3*index + 5*(index + t), index, r)
+                    t += 1
 
-        return n, m, rep, dtype, generated_seeds[len(seeds)-rep:]
+            seed_pool.append(seed)
 
-    return lambda index, parametric_value, generated_seeds= seeds: parameters_create_function(index, parametric_value, generated_seeds)
+        builder.set_generation_seeds(seed_pool[len(used_seeds)-rep:])
+        return builder.build()
+
+    return lambda index, param_value, seed_pool=used_seeds: build_array_parameters(index, param_value, seed_pool)
+
 
 def find_file(filename, search_root):
     matches = []
