@@ -180,12 +180,11 @@ class ArraySampleCreationArguments:
     
 
 class ArraySampleCreationArgumentsBuilder:
-    _variabilities = {
-        "onLength": ArraySampleCreationArguments,
-        "onNumbers": ArraySampleCreationArguments
-    }
     
-    def __init__(self, variability):
+    def __init__(self, creation_class):
+        if not issubclass(creation_class, creation_class):
+            raise ValueError(f"Creation class must be a subclass of ArraySampleCreationArgumentsBase, got {creation_class.__name__}")
+        self.creation_arguments = creation_class
         self._data = {
             "n": None,
             "m": None,
@@ -193,11 +192,7 @@ class ArraySampleCreationArgumentsBuilder:
             "seeds": None,
             "dtype": None
         }
-        if variability in self._variabilities:
-            self.creation_arguments = self._variabilities[variability]
-        else:
-            raise ValueError(f"Unable to find specific variability {variability}, available: {self._variabilities}")
-
+        
     def set_length(self, n):
         if not isinstance(n, (int, np.integer)) or n <= 0:
             raise ValueError(f"Field 'n' must be a positive integer.")
@@ -209,6 +204,11 @@ class ArraySampleCreationArgumentsBuilder:
             raise ValueError(f"Field 'm' must be a positive integer.")
         self._data["m"] = int(m)
         return self
+
+    def set_digits(self, digits):
+        if not isinstance(digits, (int, np.integer)) or digits <= 0:
+            raise ValueError(f"Field 'digits' must be a positive integer.")
+        self._data["digits"] = int(digits)
 
     def set_repetitions(self, rep):
         if not isinstance(rep, (int, np.integer)) or rep <= 0:
@@ -250,11 +250,10 @@ class ArraySampleCreationArgumentsBuilder:
 
     
     def builder_on_length(n, m):
-        return ArraySampleCreationArgumentsBuilder("onLength").set_length(n).set_number_variability(m)
+        return ArraySampleCreationArgumentsBuilder(ArraySampleCreationArguments).set_length(n).set_number_variability(m)
 
     def builder_on_numbers(n, m):
-        return ArraySampleCreationArgumentsBuilder("onNumbers").set_length(n).set_number_variability(m)
-
+        return ArraySampleCreationArgumentsBuilder(ArraySampleCreationArguments).set_length(n).set_number_variability(m)
 
         
 class ArraySample:
