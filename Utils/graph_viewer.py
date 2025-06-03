@@ -6,102 +6,161 @@ import plotly.express as px
 from Utils.ArraySettings import Variability
 from Utils import ArrayStorageCompressor
 
-def copy_layout_settings(layout, keys): return layout.to_plotly_json()
 
 def combine(figures):
-    assert len(figures) == 4, f"Expected 4 images, got {len(figures)}"
-    
+    from collections import defaultdict
+
+    assert len(figures) in [2, 4], f"Expected 2 or 4 images, got {len(figures)}"
+
+    default_variability_order = [Variability.onLength.value["nice_name"], Variability.onNumbers.value["nice_name"]]
+    default_scales_order = ["linear", "logaritmic"]
+    plotly_scale_names = {"linear": "linear", "logaritmic": "log"}
+    scale_unit = {
+        "linear": lambda x: f"({x})" if x else '',
+        "logaritmic": lambda x: f"(log({x}))" if x else '(log)'
+    }
+
+    # Metadata extraction
+    variabilities, scales = set(), set()
+    for fig in figures:
+        v = fig["layout"]["meta"]["variability"]
+        s = fig["layout"]["meta"]["scale"]
+        assert v in default_variability_order, f"Unknown variability {v}"
+        assert s in default_scales_order, f"Unknown scale {s}"
+        variabilities.add(v)
+        scales.add(s)
+
+    variabilities = [v for v in default_variability_order if v in variabilities]
+    scales = [s for s in default_scales_order if s in scales]
+    assert variabilities, f"No valid variabilities. Expected: {default_variability_order}"
+    assert len(variabilities) <= 2, (
+        f"combine() supports up to 2 variabilities. Got {len(variabilities)}: {variabilities}"
+    )
+
+    assert scales, f"No valid scales. Expected: {default_scales_order}"
+
+    # Subplot creation
+    fig = make_subplots(
+        rows=1, cols=len(variabilities),
+        shared_yaxes=False,
+        shared_xaxes=False,
+        horizontal_spacing=0.10
+    )
     default_layout = figures[0]["layout"]
-    fig = make_subplots(rows=1, cols=2, shared_yaxes=False, shared_xaxes=False, horizontal_spacing=0.10)
-    
-    positions = {
-        Variability.onLength.value["nice_name"]: {"linear": (1, 1), "logaritmic": (1, 1)},
-        Variability.onNumbers.value["nice_name"]: {"linear": (1, 2), "logaritmic": (1, 2)}
-    }
-    
+
+    # figure position
+    positions = {v: {s: (1, i + 1) for s in scales} for i, v in enumerate(variabilities)}
+
+    # subplot axies 
     axes_ids = {
-        Variability.onLength.value["nice_name"]: {"linear": ('x', 'y'), "logaritmic": ('x2', 'y')},
-        Variability.onNumbers.value["nice_name"]: {"linear": ('x', 'y2'), "logaritmic": ('x2', 'y2')}
+        v: {
+            s: (
+                f"x{col if col > 1 else ''}",
+                f"y{col if col > 1 else ''}"
+            )
+            for s, (row, col) in s_pos.items()
+        }
+        for v, s_pos in positions.items()
     }
 
-    visible_by_default = {"linear": True, "logaritmic": False}
-    vis_linear = []
-
-    for single_fig in figures:
-        meta = single_fig["layout"]["meta"]
-        v, scale = meta["variability"], meta["scale"]
-        (row, col), (xid, yid), vis = positions[v][scale], axes_ids[v][scale], visible_by_default[scale]
-        for t in single_fig.data:
-            t.update(xaxis=xid, yaxis=yid, visible=vis)
+    # set each trace to the rigth axies
+    visible_by_default = {s: s == default_scales_order[0] for s in default_scales_order}
+    for fig_in in figures:
+        var = fig_in["layout"]["meta"]["variability"]
+        scale = fig_in["layout"]["meta"]["scale"]
+        row, col = positions[var][scale]
+        x_id, y_id = axes_ids[var][scale]
+        for t in fig_in.data:
+            t.update(xaxis=x_id, yaxis=y_id, visible=visible_by_default[scale])
             fig.add_trace(t, row=row, col=col)
-            vis_linear.append(vis)
 
-    fig.update_layout(**copy_layout_settings(default_layout, ["font"]))
-    for col in range(2):
-        fig.update_yaxes(title=dict(text="Time (s)", font=dict(size=20)), row=1, col=col + 1)
+    # Import default layout
+    fig.update_layout(**default_layout.to_plotly_json())
+    fig.update_xaxes(hoverformat=".5s", title=dict(font=dict(size=20)))
+    for i, var in enumerate(variabilities):
+        fig.update_yaxes(title=dict(text="Time (s)", font=dict(size=20)), row=1, col=i + 1)
+        fig.update_xaxes(title=dict(text=var), row=1, col=i + 1)
 
-    fig.update_xaxes(type="linear", title=dict(font=dict(size=20)))
-    fig.update_xaxes(title=dict(text="Array length"), row=1, col=1)
-    fig.update_xaxes(title=dict(text="Variance"), row=1, col=2)
+    # Button action creation
+    def get_scale_args(scale):
+        args = {}
+        for var, scale_map in axes_ids.items():
+            x_id, y_id = scale_map[scale]
+            x_num = x_id[1:]
+            y_num = y_id[1:]
+            args.update({
+                f"xaxis{x_num}.type": plotly_scale_names[scale],
+                f"yaxis{y_num}.type": plotly_scale_names[scale],
+                f"xaxis{x_num}.title": f"{var} {scale_unit[scale]('')}",
+                f"yaxis{y_num}.title": f"Time {scale_unit[scale]('s')}"
+            })
+        return args
 
-    fig.update_xaxes(hoverformat=".5s")
-
+    def get_scale_button(scale):
+        return {
+            "label": f"{scale.capitalize()} scale",
+            "method": "relayout",
+            "args": [get_scale_args(scale)]
+        }
+    
+    
+    # Update final update with buttons
     fig.update_layout(
-        margin=dict(l=80, r=80, t=150, b=200),
-        height=960,
-        width=2280,
+        width=2280, height=1075,
+        margin=dict(l=80, r=80, t=150, b=205),
+        xaxis=dict(title=dict(standoff=10)),
         hovermode="x unified",
         title=dict(subtitle=dict(text="Run times grouped by sorting algorithm.", font=dict(size=24))),
-        legend=dict(orientation="h", yanchor="bottom", xanchor="center", y=-0.2, x=0.5, groupclick='togglegroup'),
+        legend=dict(
+            title=dict(text="Algorithms", side="top"),
+            yanchor="bottom", y=-0.18,
+            xanchor="center", x=0.5,
+            font=dict(size=20), entrywidth=140, orientation='h',
+            groupclick='togglegroup'
+        ),
         updatemenus=[dict(
             type="buttons",
             direction="right",
             x=0.55, y=-0.2,
             showactive=True,
             buttons=[
-                dict(label="Linear scale", method="relayout", args=[{
-                    "xaxis.type": "linear", "xaxis2.type": "linear",
-                    "xaxis.title": "Array length", "xaxis2.title": "Number variance",
-                    "yaxis.type": "linear", "yaxis2.type": "linear",
-                    "yaxis.title": "Time (s)", "yaxis2.title": "Time (s)"
-                }]),
-                dict(label="Logaritmic scale", method="relayout", args=[{
-                    "xaxis.type": "log", "xaxis2.type": "log",
-                    "xaxis.title": "Array length (log)", "xaxis2.title": "Number variance (log)",
-                    "yaxis.type": "log", "yaxis2.type": "log",
-                    "yaxis.title": "Time (log(s))", "yaxis2.title": "Time (log(s))"
-                }])
+                get_scale_button("linear"),
+                get_scale_button("logaritmic")
             ]
         )]
     )
 
-    # Legend grouping
-    for trace in fig.data:
-        trace.legendgroup = trace.name
+    # Hide traces for non-active scales
+    all_traces = list(fig.data)
+    seen = set()
+    for trace in all_traces:
+        name = trace.name
+        trace.legendgroup = name
+        if name in seen:
+            trace.showlegend = False
+        else:
+            seen.add(name)
+            trace.showlegend = True
 
-    for alg in set(t.name for t in fig.data):
-        traces = [t for t in fig.data if t.name == alg]
-        for i, t in enumerate(traces):
-            t.showlegend = (i == 0)
-
-    # Coloring
+    # copy and paste trace color 
     palette = px.colors.qualitative.Plotly
-    alg_colors = {alg: palette[i % len(palette)] for i, alg in enumerate(sorted(set(t.name for f in figures for t in f.data)))}
+    algorithms = sorted({t.name for f in figures for t in f.data})
+    alg_colors = {alg: palette[i % len(palette)] for i, alg in enumerate(algorithms)}
+    for trace in all_traces:
+        c = alg_colors.get(trace.name, "#000")
+        if hasattr(trace, 'marker') and hasattr(trace.marker, 'color'):
+            trace.marker.color = c
+        if hasattr(trace, 'line') and hasattr(trace.line, 'color'):
+            trace.line.color = c
 
-    for t in fig.data:
-        c = alg_colors.get(t.name, "#000")
-        if hasattr(t, 'marker') and hasattr(t.marker, 'color'):
-            t.marker.color = c
-        if hasattr(t, 'line') and hasattr(t.line, 'color'):
-            t.line.color = c
+    # add visible separator
+    if len(variabilities) > 1:
+        fig.add_shape(
+            type="line", x0=0.5, x1=0.5, y0=0, y1=1,
+            xref="paper", yref="paper",
+            line=dict(color="LightGray", width=2, dash="dash"),
+        )
 
-    # Vertical separator
-    fig.add_shape(
-        type="line", x0=0.5, x1=0.5, y0=0, y1=1,
-        xref="paper", yref="paper",
-        line=dict(color="LightGray", width=2, dash="dash"),
-    )
-    
     return fig
 
 def find_file(filename, search_root):
@@ -118,20 +177,9 @@ def write_figures(figures, output, width=1500, height=900, scale=4):
         fig = combine(figures)
     else:
         fig = figures.pop()
+    if '.' not in output:
+        output += ".html"
     if output.endswith(".html"):
-        fig.update_layout(
-            width=2280, height=1100,
-            margin=dict(l=80, r=80, t=150, b=200),
-            xaxis=dict(title=dict(standoff=10)),
-            legend=dict(
-                title=dict(text="Algorithms", side="top"),
-                yanchor="bottom", y=-0.18,
-                xanchor="center", x=0.5,
-                font=dict(size=20), entrywidth=140, orientation='h'
-            ),
-            updatemenus=[dict(pad=dict(r=20, l=20, t=20, b=20))]
-        )
-
         html_str = fig.to_html(include_plotlyjs='cdn', full_html=True, config={"responsive": True})
         if figures:
             html_str = html_str.replace(
