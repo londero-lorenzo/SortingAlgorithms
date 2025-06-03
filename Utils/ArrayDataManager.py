@@ -177,27 +177,48 @@ class ArraySampleCreationArguments:
     def __repr__(self):
         args = ', '.join(f"{k}={getattr(self, k)}" for k in self._ordered_keys)
         return f"{self.__class__.__name__}({args})"
+
+class ArraySampleCreationArgumentsOnDigits(ArraySampleCreationArguments):
+    _ordered_keys = ["n", "m", "digits", "rep", "seeds", "dtype"]
+    def __init__(self, n = None, digits = None, rep = None, seeds = None, dtype = None, *args, **kwargs):
+        super().__init__(n, None, rep, seeds, dtype)
+        self.digits = None
+        if digits:
+            self.set_digits(digits)
+
+    def set_digits(self, digits):
+        if not isinstance(digits, (int, np.integer)) or digits <= 0:
+            raise ValueError(f"Field 'digits' must be a positive integer.")
+        self.digits = int(digits)
     
 
-class ArraySampleCreationArgumentsBuilder:
-    _variabilities = {
-        "onLength": ArraySampleCreationArguments,
-        "onNumbers": ArraySampleCreationArguments
-    }
+    def __str__(self):
+        return(
+            f"length: {self.n}, digits: {self.digits}, "
+            f"repetitions: {self.rep}, seeds: {self.seeds}, dtype: {self.dtype}"
+        )
+        
+    def get_number_variability(self):
+        raise NotImplementedError("Number variability is not available for digit variability.")
     
-    def __init__(self, variability):
+    def set_number_variability(self):
+        raise NotImplementedError("Number variability is not available for digit variability.")
+        
+class ArraySampleCreationArgumentsBuilder:
+    
+    def __init__(self, creation_class):
+        if not issubclass(creation_class, ArraySampleCreationArguments):
+            raise ValueError(f"Creation class must be a subclass of ArraySampleCreationArgumentsBase, got {creation_class.__name__}")
+        self.creation_arguments = creation_class
         self._data = {
             "n": None,
             "m": None,
+            'digits': None,
             "rep": None,
             "seeds": None,
             "dtype": None
         }
-        if variability in self._variabilities:
-            self.creation_arguments = self._variabilities[variability]
-        else:
-            raise ValueError(f"Unable to find specific variability {variability}, available: {self._variabilities}")
-
+        
     def set_length(self, n):
         if not isinstance(n, (int, np.integer)) or n <= 0:
             raise ValueError(f"Field 'n' must be a positive integer.")
@@ -208,6 +229,12 @@ class ArraySampleCreationArgumentsBuilder:
         if not isinstance(m, (int, np.integer)) or m <= 0:
             raise ValueError(f"Field 'm' must be a positive integer.")
         self._data["m"] = int(m)
+        return self
+
+    def set_digits(self, digits):
+        if not isinstance(digits, (int, np.integer)) or digits <= 0:
+            raise ValueError(f"Field 'digits' must be a positive integer.")
+        self._data["digits"] = int(digits)
         return self
 
     def set_repetitions(self, rep):
@@ -250,10 +277,13 @@ class ArraySampleCreationArgumentsBuilder:
 
     
     def builder_on_length(n, m):
-        return ArraySampleCreationArgumentsBuilder("onLength").set_length(n).set_number_variability(m)
+        return ArraySampleCreationArgumentsBuilder(ArraySampleCreationArguments).set_length(n).set_number_variability(m)
 
     def builder_on_numbers(n, m):
-        return ArraySampleCreationArgumentsBuilder("onNumbers").set_length(n).set_number_variability(m)
+        return ArraySampleCreationArgumentsBuilder(ArraySampleCreationArguments).set_length(n).set_number_variability(m)
+
+    def builder_on_digits(n, d):
+        return ArraySampleCreationArgumentsBuilder(ArraySampleCreationArgumentsOnDigits).set_length(n).set_digits(d)
 
 
         
