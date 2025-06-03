@@ -18,9 +18,14 @@ ARRAY_GENERATION_FILE = "generation_params.json"
 #     dtype = type of generated numbers
 # Ouput:
 #     random interger array with size 'n' and number variability of 'm' as type of 'dtype'
-def initialize_array(n, m, dtype, seed):
+def initialize_array(n, m, digits, dtype, seed):
     rng = np.random.default_rng(None if seed is None else int(seed))
-    return rng.integers(m, size=n).astype(dtype)
+    if digits is not None:
+        low  = 10 ** (digits - 1)
+        high = 10 ** digits
+        return rng.integers(low=low, high=high, size=n).astype(dtype)
+    else:
+        return rng.integers(m, size=n).astype(dtype)
 
 
 
@@ -32,12 +37,12 @@ def initialize_array(n, m, dtype, seed):
 #     dtype = type of generated numbers (default = np.int64)
 # Ouput:
 #     random interger array with size 'n' and number variability of 'm' as type of 'dtype'
-def sample(n, m, rep = 1, dtype= np.int64, seeds= None):
+def sample(n, m, digits= None, rep = 1, dtype= np.int64, seeds= None):
     if seeds is None:
         seeds = [None for _ in range(rep)]
     arraysGeneated = []
     for i in range(rep):
-        currentGeneratedArray = initialize_array(n, m, dtype, seeds[i])
+        currentGeneratedArray = initialize_array(n, m, digits, dtype, seeds[i])
         arraysGeneated.append(currentGeneratedArray)
 
     return arraysGeneated
