@@ -1,4 +1,5 @@
 import os, fnmatch
+import sys
 import argparse
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -110,7 +111,11 @@ def combine(figures):
         margin=dict(l=80, r=80, t=150, b=205),
         xaxis=dict(title=dict(standoff=10)),
         hovermode="x unified",
-        title=dict(subtitle=dict(text="Run times grouped by sorting algorithm.", font=dict(size=24))),
+        title=dict(
+            subtitle=dict(
+                text="Run times grouped by sorting algorithm according to <a href= 'https://londero-lorenzo.github.io/SortingAlgorithms/'>Performance and Analysis of Sorting Algorithms</a> report.", font=dict(size=24),
+            )
+        ),
         legend=dict(
             title=dict(text="Algorithms", side="top"),
             yanchor="bottom", y=-0.18,
