@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Performance analysis of sorting algorithms under different data distributions." />
+		<meta property="og:title" content="Sorting Algorithms Benchmark" />
+		<meta property="og:description" content="Interactive plots and report on QuickSort, RadixSort, CountingSort and more." />
+		<meta property="og:image" content="preview.png" />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://londero-lorenzo.github.io/SortingAlgorithms/" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<script src="https://cdn.jsdelivr.net/npm/@webcomponents/webcomponentsjs@2/webcomponents-loader.min.js"></script>
+		<script type="module" src="https://cdn.jsdelivr.net/gh/zerodevx/zero-md@1/src/zero-md.min.js"></script>
+		
+		<title>Sorting Algorithms Benchmark</title>
+		<style>
+			body {
+				font-family: sans-serif;
+				max-width: 800px;
+				margin: 20px auto;
+				padding: 0 20px;
+				line-height: 1.6;
+				background-color: #f4f4f4;
+			}
+			h1, h2 {
+				color: #333;
+			}
+			a {
+				color: #0366d6;
+				text-decoration: none;
+			}
+			a:hover {
+				text-decoration: underline;
+			}
+			.container {
+				max-width: 900px;
+				margin: auto;
+				background: white;
+				padding: 2rem;
+				box-shadow: 0 0 10px rgba(0,0,0,0.1);
+			}
+		</style>
+	</head>
+	<body>
+		<article class="container">
+			<header style="margin-bottom: 2rem; text-align: center;">
+				<h1 style="margin-bottom: 0.5rem;">Sorting Algorithms Benchmark</h1>
+					<p style="font-size: 1.1rem; font-weight: 500; color: #444;">
+						Università degli Studi di Udine – Corso di <br />
+						<em>Laboratorio di Algoritmi e Strutture Dati</em> (a.a. 2024/25)
+					</p>
+				<p style="font-size: 0.95rem; color: #666;">
+					Developed by <strong>Lorenzo Londero</strong>
+				</p>
+				<p style="font-size: 0.95rem; color: #666;">
+					Collaborators: <strong>Andre Peruzza</strong>, <strong>Giovanni Fabro</strong> &nbsp;|&nbsp; Supervisor: <strong>Prof. Gabriele Puppis</strong>
+				</p>
+			</header>
+			<zero-md src="report.md"></zero-md>
+
+			<footer style="margin-top: 40px; font-size: 0.9em; color: #888;">
+				<p>Created by Lorenzo Londero — 2025</p>
+				<p>e-mail: londero.lorenzo.sc@gmail.com</p>
+			</footer>
+		</article>
+	</body>
+</html>
