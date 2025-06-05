@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from Utils.ArraySettings import Variability
 from Utils import ArrayStorageCompressor
+import glob
 
 
 def combine(figures):
@@ -168,8 +169,6 @@ def combine(figures):
 
     return fig
 
-def find_file(filename, search_root):
-    return [os.path.join(r, f) for r, _, fs in os.walk(search_root) for f in fs if fnmatch.fnmatch(f, filename)]
 
 def show_figures(figures):
     if len(figures) > 1:
@@ -279,36 +278,41 @@ def write_figures(figures, output, width=1500, height=900, scale=4):
             f.write(html_str)
     else:
         fig.write_image(output , width = width, height = height, scale = scale)
+        
+        
+        
+def batch_process(pattern: str, output: str):
+    files = [f for f in glob.glob(pattern, recursive=True)]
+    if not files:
+        location = f"at {pattern}" if '*' not in pattern else f"with pattern {pattern}"
+        print(f"Error: no figure files found {location}.")
+        sys.exit(1)
+
+    print(f"Found {len(files)} figure file(s):")
+    for f in files:
+        print(f"  • {f}")
+    
+    figures = [ ]
+    
+    for figure_path in files:
+        fig = ArrayStorageCompressor.readFromFile(figure_path)
+        if isinstance(fig, go.Figure):
+            figures.append(fig)
+
+
+    if output is None:
+        show_figures(figures)
+    else:
+        write_figures(figures, output, width = 1500, height = 900, scale = 4)
+    
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Visualize time graph")
     parser.add_argument("-f", "--file", help="Target file path, must be a plotly.graph_objects.Figure object.", type=str, required=True)
-    parser.add_argument("-o", "--output", help="Folder where the chunks array will be generetad.", type=str, default= None)
-    parser.add_argument("-a", "--auto", help="Automatically generate the arrays by searching for the target file.", action='store_true')
-    parser.add_argument("-s", "--searchFolder", help="Folder from which to search the target file (used with --auto).", type=str, default=".")
-    
+    parser.add_argument("-o", "--output", help="Folder where the figures will be generetad.", type=str, default= None)
+
     args = parser.parse_args()
-    figures = []
     
-    if args.auto:
-        if '*.' in args.file and args.file.count('.') > 1:
-            raise ValueError("Pattern name not recognized.")
-        figure_paths = find_file(args.file, args.searchFolder)
-        if len(figure_paths) == 0:
-            print(f"Error: no file named '{args.file}' found in '{args.searchFolder}'")
-            sys.exit(1)
-        for figure_path in figure_paths:
-            figure = ArrayStorageCompressor.readFromFile(figure_path)
-            assert isinstance(figure, go.Figure), f"Imported file must be a plotly.graph_objects.Figure object"
-            figures.append(figure)
-            
-    else:
-        figure = ArrayStorageCompressor.readFromFile(args.file)
-        assert isinstance(figure, go.Figure), f"Imported file must be a plotly.graph_objects.Figure object"
-        figures.append(figure)
-        
-   
-    if args.output is None:
-        show_figures(figures)
-    else:
-        write_figures(figures, args.output, width = 1500, height = 900, scale = 4)
+    
+    batch_process(args.file, args.output)
