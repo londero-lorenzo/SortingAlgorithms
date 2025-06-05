@@ -38,8 +38,8 @@ AlgorithmArguments = {
     AlgoritmiDiOrdinamento.InsertionSort.__name__: lambda array: (array, ),
     AlgoritmiDiOrdinamento.QuickSort.__name__: lambda array: (array, 0, len(array)-1),
     AlgoritmiDiOrdinamento.QuickSort3Way.__name__: lambda array: (array, 0, len(array)-1),
-    AlgoritmiDiOrdinamento.CountingSort.__name__: lambda array: (array, [0]*len(array), int(np.ceil(ArraySettings.MAX_NUMBER_IN_SAMPLER_RANGE))+1),
-    AlgoritmiDiOrdinamento.RadixSort.__name__: lambda array: (array, len(str(ArraySettings.MAX_NUMBER_IN_SAMPLER_RANGE)))
+    AlgoritmiDiOrdinamento.CountingSort.__name__: lambda array: (array, [0]*len(array), max(array)+1),
+    AlgoritmiDiOrdinamento.RadixSort.__name__: lambda array: (array, len(str(max(array)+1)))
 }
 
 
