@@ -37,7 +37,7 @@ sys.setrecursionlimit(ArraySettings.MAXIMUM_ARRAY_LENGTH+1)
 AlgorithmArguments = {
     AlgoritmiDiOrdinamento.InsertionSort.__name__: lambda array: (array, ),
     AlgoritmiDiOrdinamento.QuickSort.__name__: lambda array: (array, 0, len(array)-1),
-    AlgoritmiDiOrdinamento.QuickSort3Way.__name__: lambda array: (array, 0, len(array)-1),
+    AlgoritmiDiOrdinamento.QuickSort3Way.__name__: lambda array: (array, 0, len(array)),
     AlgoritmiDiOrdinamento.CountingSort.__name__: lambda array: (array, [0]*len(array), max(array)+1),
     AlgoritmiDiOrdinamento.RadixSort.__name__: lambda array: (array, len(str(max(array)+1)))
 }

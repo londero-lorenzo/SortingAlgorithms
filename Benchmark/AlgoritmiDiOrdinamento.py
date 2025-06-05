@@ -38,34 +38,31 @@ def swap(A, i, j):
 
 ##----------------------------------------------------------------QuickSort3Way-------------------------------------------------------------------##
 
-def partition3way(a, i, j):
-    assert i < j
-    k = m = l = i
-    pivot = a[j - 1]
+def partition3way(a, lo, hi):
+    pivot = a[hi - 1]
+    lt = lo
+    i = lo
+    gt = hi - 1
 
-    while m < j:
-        if a[m] < pivot:
-            a[k], a[l], a[m] = a[m], a[k], a[l]
-            k = k + 1
-            l = l + 1
-            m = m + 1
-        elif a[m] == pivot:
-            a[l], a[m] = a[m], a[l]
-            l = l + 1
-            m = m + 1
+    while i <= gt:
+        if a[i] < pivot:
+            a[lt], a[i] = a[i], a[lt]
+            lt += 1
+            i += 1
+        elif a[i] > pivot:
+            a[i], a[gt] = a[gt], a[i]
+            gt -= 1
         else:
-            m = m + 1
-    return k, l
+            i += 1
+    return lt, gt + 1
 
-
-def QuickSort3Way(a, i, j):
-    if j - i <= 1:
+def QuickSort3Way(a, lo, hi):
+    if hi - lo <= 1:
         return
-    
-    k, l = partition3way(a, i, j)
 
-    QuickSort3Way(a, i, k)
-    QuickSort3Way(a, l, j)
+    lt, gt = partition3way(a, lo, hi)
+    QuickSort3Way(a, lo, lt)
+    QuickSort3Way(a, gt, hi)
 
 ##------------------------------------------------------------------------CountingSort--------------------------------------------------------------##
 
