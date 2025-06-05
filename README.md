@@ -31,6 +31,20 @@ A configurable benchmarking suite for classic sorting algorithms on large intege
 
 ---
 
+## Final Report
+
+The final report — including methodology, data analysis, and conclusions — is available at this page:
+
+[https://londero-lorenzo.github.io/SortingAlgorithms/](https://londero-lorenzo.github.io/SortingAlgorithms/)
+
+This page includes:
+
+- A readable version of the report as PDF (Word-based)
+- Interactive performance plots
+- Access to source code and benchmarks
+
+---
+
 ## Configuration
 
 ### Variability Settings (`Utils/ArraySettings.py`)
@@ -50,7 +64,7 @@ A configurable benchmarking suite for classic sorting algorithms on large intege
 - Interactive graphs are saved as standalone HTML files, suitable for GitHub Pages.
 - Final plots estimate the mean execution time for each data point and include a **95 % confidence interval**.
 - The interactive benchmark visualization is available at:  
-  [https://londero-lorenzo.github.io/SortingAlgorithms/benchmarks.html](https://londero-lorenzo.github.io/SortingAlgorithms/benchmarks.html)
+  [https://londero-lorenzo.github.io/SortingAlgorithms/benchmarks.html](https://londero-lorenzo.github.io/SortingAlgorithms/assets/benchmarks.html)
 
 ---
 
