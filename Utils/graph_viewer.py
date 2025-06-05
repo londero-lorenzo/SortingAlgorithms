@@ -113,7 +113,7 @@ def combine(figures):
         hovermode="x unified",
         title=dict(
             subtitle=dict(
-                text="Run times grouped by sorting algorithm according to <a href= 'https://londero-lorenzo.github.io/SortingAlgorithms/'>Performance and Analysis of Sorting Algorithms</a> report.", font=dict(size=24),
+                text="Run times grouped by sorting algorithm according to <a href= 'https://londero-lorenzo.github.io/SortingAlgorithms/' target='_self'>Performance and Analysis of Sorting Algorithms</a> report.", font=dict(size=24),
             )
         ),
         legend=dict(

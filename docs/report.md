@@ -6,7 +6,7 @@ This project analyzes the performance of various sorting algorithms under varyin
 
 Explore the runtime measurements and comparisons:
 
-<a href="https://londero-lorenzo.github.io/SortingAlgorithms/assets/benchmarks.html" target="blank">View the interactive performance plot
+<a href="https://londero-lorenzo.github.io/SortingAlgorithms/assets/benchmarks.html" target='_self'>View the interactive performance plot
 	<img src="assets/benckmark_log.png" alt="Plot preview" width="100%">
 </a>
 ---
@@ -15,7 +15,7 @@ Explore the runtime measurements and comparisons:
 
 Read the full documentation and methodology in our report:
 
-<a href="https://londero-lorenzo.github.io/SortingAlgorithms/Prestazioni_ed_Analisi_di_Algoritmi_di_Ordinamento.pdf" target="blank">View the PDF Report [ITA]</a>
+<a href="https://londero-lorenzo.github.io/SortingAlgorithms/Prestazioni_ed_Analisi_di_Algoritmi_di_Ordinamento.pdf" target="_blank">View the PDF Report [ITA]</a>
 
 ---
 
@@ -24,10 +24,10 @@ Read the full documentation and methodology in our report:
 The benchmark was conducted on datasets generated under two distinct configurations:
 
 - **Length variability**: Arrays with increasing sizes (from 100 to 100,000 elements), using a fixed value range.
-<a href="https://londero-lorenzo.github.io/SortingAlgorithms/assets/benchmark_on_length.html" target="blank">View the interactive performance plot</a>.
+<a href="https://londero-lorenzo.github.io/SortingAlgorithms/assets/benchmark_on_length.html" target='_self'>View the interactive performance plot</a>.
 
 - **Value variability**: Arrays of fixed length, but varying number of distinct elements (from 10 to 1,000,000).
-<a href="https://londero-lorenzo.github.io/SortingAlgorithms/assets/benchmark_on_numbers.html" target="blank">View the interactive performance plot</a>.
+<a href="https://londero-lorenzo.github.io/SortingAlgorithms/assets/benchmark_on_numbers.html" target='_self'>View the interactive performance plot</a>.
 
 All arrays are generated deterministically using seed-based sampling, ensuring full reproducibility of results.
 
@@ -58,4 +58,4 @@ The following algorithms were analyzed:
 ---
 
 
-## <a href="https://github.com/londero-lorenzo/SortingAlgorithms" target="blank">GitHub Repository →</a>
+## <a href="https://github.com/londero-lorenzo/SortingAlgorithms" target="_blank">GitHub Repository →</a>
