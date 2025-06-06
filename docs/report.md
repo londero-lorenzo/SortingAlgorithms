@@ -23,10 +23,10 @@ Read the full documentation and methodology in our report:
 
 The benchmark was conducted on datasets generated under two distinct configurations:
 
-- **Length variability**: Arrays with increasing sizes (from 100 to 100,000 elements), using a fixed value range.
+- **Length variability**: Arrays with increasing sizes (from 100 to 100,000 elements), using a fixed value range of 100,000.
 <a href="https://londero-lorenzo.github.io/SortingAlgorithms/assets/benchmark_on_length.html" target='_self'>View the interactive performance plot</a>.
 
-- **Value variability**: Arrays of fixed length, but varying number of distinct elements (from 10 to 1,000,000).
+- **Value variability**: Arrays of length 10,000, each containing a different number of distinct elements (ranging from 10 to 1,000,000).
 <a href="https://londero-lorenzo.github.io/SortingAlgorithms/assets/benchmark_on_numbers.html" target='_self'>View the interactive performance plot</a>.
 
 All arrays are generated deterministically using seed-based sampling, ensuring full reproducibility of results.
