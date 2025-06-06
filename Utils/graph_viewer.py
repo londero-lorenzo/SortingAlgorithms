@@ -185,94 +185,112 @@ def write_figures(figures, output, width=1500, height=900, scale=4):
         output += ".html"
     if output.endswith(".html"):
         html_str = fig.to_html(include_plotlyjs='cdn', full_html=True, config={"responsive": True})
-        if figures:
-            html_str = html_str.replace(
-                "<body>",
-                """
-                <body>
-                <style>
-                    body {
-                        margin: 0;
-                        padding: 0;
-                        width: 100% !important;
-                        height: 90% !important;
+        #if figures:
+        
+        html_str = html_str.replace(
+        "<head>",
+        """
+        <head>
+        <meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="description" content="Performance analysis of sorting algorithms under different data distributions." />
+		<meta property="og:title" content="Sorting Algorithms Benchmark" />
+		<link rel="icon" type="image/x-icon" href="https://londero-lorenzo.github.io/SortingAlgorithms/images/preview.png">
+		<meta property="og:description" content="Interactive plots and report on QuickSort, RadixSort, CountingSort and more." />
+		<meta property="og:image" content="https://londero-lorenzo.github.io/SortingAlgorithms/images/preview.png" />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://londero-lorenzo.github.io/SortingAlgorithms/" />
+		<meta name="twitter:card" content="summary_large_image" />
+        """
+        )
+        
+        html_str = html_str.replace(
+            "<body>",
+            """
+            <body>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 0;
+                    width: 100% !important;
+                    height: 90% !important;
+                }
+
+                .updatemenu-header-group > g .updatemenu-item-rect {
+                    height: 36px !important;
+                }
+
+                .updatemenu-item-text {
+                    font-size: 20px !important;
+                    dominant-baseline: middle;
+                }
+            </style>
+            <script>
+                function repositionButtons() {
+                    const buttons = document.querySelectorAll('.updatemenu-header-group .updatemenu-button');
+                    if (buttons.length === 0) {
+                        return;
                     }
 
-                    .updatemenu-header-group > g .updatemenu-item-rect {
-                        height: 36px !important;
+                    const legend = document.querySelector('.infolayer .legend');
+                    if (!legend) {
+                        return;
                     }
 
-                    .updatemenu-item-text {
-                        font-size: 20px !important;
-                        dominant-baseline: middle;
-                    }
-                </style>
-                <script>
-                    function repositionButtons() {
-                        const buttons = document.querySelectorAll('.updatemenu-header-group .updatemenu-button');
-                        if (buttons.length === 0) {
-                            return;
-                        }
+                    const rect = legend.getBoundingClientRect();
+                    const bound_x = rect.width;
+                    const bound_y = rect.height;
 
-                        const legend = document.querySelector('.infolayer .legend');
-                        if (!legend) {
-                            return;
-                        }
-
-                        const rect = legend.getBoundingClientRect();
-                        const bound_x = rect.width;
-                        const bound_y = rect.height;
-
-                        const raw_transform = legend.getAttribute("transform");
-                        if (!raw_transform) {
-                            return;
-                        }
-
-                        const coords = raw_transform
-                            .substring(raw_transform.indexOf("(") + 1, raw_transform.indexOf(")"))
-                            .split(',')
-                            .map(val => parseFloat(val.trim()));
-
-                        const [tx, ty] = coords;
-
-                        const spacing = 20;
-                        let totalWidth = 0;
-
-                        buttons.forEach((btn) => {
-                            const w = btn.getBBox().width;
-                            totalWidth += w;
-                        });
-                        totalWidth += spacing * (buttons.length - 1);
-
-                        const startX = tx + bound_x / 2 - totalWidth / 2;
-                        const y = ty + bound_y + bound_y / 2;
-
-                        let currentX = startX;
-                        buttons.forEach((btn) => {
-                            const btnWidth = btn.getBBox().width;
-                            btn.setAttribute('transform', `translate(${currentX}, ${y})`);
-                            currentX += btnWidth + spacing;
-                        });
+                    const raw_transform = legend.getAttribute("transform");
+                    if (!raw_transform) {
+                        return;
                     }
 
-                    window.addEventListener("load", function () {
-                        repositionButtons();
+                    const coords = raw_transform
+                        .substring(raw_transform.indexOf("(") + 1, raw_transform.indexOf(")"))
+                        .split(',')
+                        .map(val => parseFloat(val.trim()));
 
-                        const plotContainer = document.querySelector('.main-svg');
-                        if (plotContainer) {
-                            const observer = new MutationObserver(() => {
-                                repositionButtons();
-                            });
+                    const [tx, ty] = coords;
 
-                            observer.observe(plotContainer, {
-                                childList: true,
-                                subtree: true,
-                            });
-                        }
+                    const spacing = 20;
+                    let totalWidth = 0;
+
+                    buttons.forEach((btn) => {
+                        const w = btn.getBBox().width;
+                        totalWidth += w;
                     });
-                </script>
-                """
-            )
+                    totalWidth += spacing * (buttons.length - 1);
+
+                    const startX = tx + bound_x / 2 - totalWidth / 2;
+                    const y = ty + bound_y + bound_y / 2;
+
+                    let currentX = startX;
+                    buttons.forEach((btn) => {
+                        const btnWidth = btn.getBBox().width;
+                        btn.setAttribute('transform', `translate(${currentX}, ${y})`);
+                        currentX += btnWidth + spacing;
+                    });
+                }
+
+                window.addEventListener("load", function () {
+                    repositionButtons();
+
+                    const plotContainer = document.querySelector('.main-svg');
+                    if (plotContainer) {
+                        const observer = new MutationObserver(() => {
+                            repositionButtons();
+                        });
+
+                        observer.observe(plotContainer, {
+                            childList: true,
+                            subtree: true,
+                        });
+                    }
+                });
+            </script>
+            """
+        )
 
         with open(output, "w", encoding="utf-8") as f:
             f.write(html_str)
