@@ -276,9 +276,11 @@ def write_figures(figures, output, width=1500, height=900, scale=4):
 
         with open(output, "w", encoding="utf-8") as f:
             f.write(html_str)
+        
     else:
         fig.write_image(output , width = width, height = height, scale = scale)
         
+    print(f"Interactive graph saved at:\n{os.path.abspath(output)}")
         
         
 def batch_process(pattern: str, output: str):
@@ -287,19 +289,26 @@ def batch_process(pattern: str, output: str):
         location = f"at {pattern}" if '*' not in pattern else f"with pattern {pattern}"
         print(f"Error: no figure files found {location}.")
         sys.exit(1)
-
-    print(f"Found {len(files)} figure file(s):")
-    for f in files:
-        print(f"  • {f}")
     
-    figures = [ ]
+    for f in files[:]:
+        if os.path.isdir(f):
+            batch_process(f"{f}\**\*.fig", output)
+            files.remove(f)
+    
+    if not files:
+        sys.exit(0)
+    
+    figures = []
     
     for figure_path in files:
         fig = ArrayStorageCompressor.readFromFile(figure_path)
         if isinstance(fig, go.Figure):
             figures.append(fig)
 
-
+    print(f"Found {len(files)} figure file(s):")
+    for f in files:
+        print(f"  • {f}")
+        
     if output is None:
         show_figures(figures)
     else:
