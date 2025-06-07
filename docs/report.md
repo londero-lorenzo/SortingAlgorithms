@@ -42,7 +42,7 @@ Key measurement details:
 
 - Minimum duration (`minTime`) is calibrated to avoid timer resolution errors.
 - For each sample, **median**, **interquartile range (IQR)**, and outliers are computed.
-- Asymmetric error bars are used to reflect the true spread of the distribution.
+- Symmetric error bars are used to reflect the true spread of the distribution.
 
 ---
 
