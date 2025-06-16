@@ -301,6 +301,31 @@ def assert_dict_with_ArraySample(data):
 
         
 class ArraySampleContainer(BaseDataDictionary):
+    """
+    Contenitore specializzato per la gestione strutturata di array di test (sample), estende BaseDataDictionary.
+    Ogni valore nel dizionario interno rappresenta un oggetto 'ArraySample' associato a una chiave (tipicamente la lunghezza).
+
+    Metodi principali:
+        - update(data, overwriting=True): aggiorna il contenuto del container con nuovi campioni.
+        - get_samples(): restituisce tutti i campioni.
+        - get(key, byKey=True): restituisce un singolo campione per chiave o per indice.
+        - keys(toSort=True, interval=None): restituisce le chiavi ordinate e/o filtrate.
+        - getIndeciesOfUniformlySubdividedArray(n_chunks, interval=None): restituisce indici di partizione uniforme.
+        - subdivideArrayUniformly(n_chunks, returnWithData=True, interval=None): restituisce i sotto-container o le liste di chiavi.
+        - get_creation_arguments(): restituisce tutti gli argomenti di creazione in formato dict.
+        - estimate_data_size_MB(): stima la dimensione totale dei dati in MB.
+        - getFromIntervall(start, end): sottoselezione per intervallo di indice.
+        - getFromKeys(keys): sottoselezione per chiavi esplicite.
+        - to_dict(): restituisce il contenuto convertito in dict standard.
+
+    Overrides:
+        - __eq__, __hash__, __len__, __contains__, __getitem__
+
+    Raises:
+        AssertionError: se i dati passati non sono nel formato previsto (verificato da assert_dict_with_ArraySample).
+        IndexError: in vari metodi, se si accede a chiavi o intervalli non validi.
+    """
+
 
     def __init__(self, initial_data= {}):
         if isinstance(initial_data, ArraySampleContainer):
