@@ -302,29 +302,30 @@ def assert_dict_with_ArraySample(data):
         
 class ArraySampleContainer(BaseDataDictionary):
     """
-    Contenitore specializzato per la gestione strutturata di array di test (sample), estende BaseDataDictionary.
-    Ogni valore nel dizionario interno rappresenta un oggetto 'ArraySample' associato a una chiave (tipicamente la lunghezza).
+    Specialized container for the structured management of test arrays (samples), extending BaseDataDictionary.
+    Each value in the internal dictionary represents an 'ArraySample' object associated with a key (typically the length).
 
-    Metodi principali:
-        - update(data, overwriting=True): aggiorna il contenuto del container con nuovi campioni.
-        - get_samples(): restituisce tutti i campioni.
-        - get(key, byKey=True): restituisce un singolo campione per chiave o per indice.
-        - keys(toSort=True, interval=None): restituisce le chiavi ordinate e/o filtrate.
-        - getIndeciesOfUniformlySubdividedArray(n_chunks, interval=None): restituisce indici di partizione uniforme.
-        - subdivideArrayUniformly(n_chunks, returnWithData=True, interval=None): restituisce i sotto-container o le liste di chiavi.
-        - get_creation_arguments(): restituisce tutti gli argomenti di creazione in formato dict.
-        - estimate_data_size_MB(): stima la dimensione totale dei dati in MB.
-        - getFromIntervall(start, end): sottoselezione per intervallo di indice.
-        - getFromKeys(keys): sottoselezione per chiavi esplicite.
-        - to_dict(): restituisce il contenuto convertito in dict standard.
+    Main methods:
+        - update(data, overwriting=True): updates the container content with new samples.
+        - get_samples(): returns all stored samples.
+        - get(key, byKey=True): returns a single sample by key or by index.
+        - keys(toSort=True, interval=None): returns keys, optionally sorted and/or filtered by interval.
+        - getIndeciesOfUniformlySubdividedArray(n_chunks, interval=None): returns indices for uniform partitioning.
+        - subdivideArrayUniformly(n_chunks, returnWithData=True, interval=None): returns sub-containers or lists of keys.
+        - get_creation_arguments(): returns creation arguments for all samples in dict format.
+        - estimate_data_size_MB(): estimates the total data size in MB.
+        - getFromIntervall(start, end): returns a sub-dictionary for a given index range.
+        - getFromKeys(keys): returns a sub-dictionary for a given set of keys.
+        - to_dict(): converts the content to a standard dict format.
 
     Overrides:
         - __eq__, __hash__, __len__, __contains__, __getitem__
 
     Raises:
-        AssertionError: se i dati passati non sono nel formato previsto (verificato da assert_dict_with_ArraySample).
-        IndexError: in vari metodi, se si accede a chiavi o intervalli non validi.
+        AssertionError: if the provided data is not in the expected format (validated by assert_dict_with_ArraySample).
+        IndexError: in various methods when accessing invalid keys or intervals.
     """
+
 
 
     def __init__(self, initial_data= {}):
@@ -339,12 +340,13 @@ class ArraySampleContainer(BaseDataDictionary):
         assert_dict_with_ArraySample(data)
         super().update(data, **options)
 
-    ## interval is exclusive for the end: [start, end)
+    # interval is exclusive for the end: [start, end)
     def getIndeciesOfUniformlySubdividedArray(self, n_chunks, interval=None):
         """
-        Suddivide le chiavi in `n_chunks` blocchi con (circa) lo stesso numero di elementi (n * rep).
-        Evita l'uso di bisect, esegue la divisione con un solo passaggio lineare.
+        Splits the keys into `n_chunks` blocks with (approximately) the same number of elements (n * rep).
+        Avoids using bisect; performs the division in a single linear pass.
         """
+
         keys = self.keys(toSort=True)
         offset = 0
         if interval is not None:
@@ -373,10 +375,11 @@ class ArraySampleContainer(BaseDataDictionary):
 
     def subdivideArrayUniformly(self, n_chunks, returnWithData=True, interval=None):
         """
-        Suddivide gli array in `n_chunks` blocchi basati sul numero totale di elementi (n * rep).
-        Se returnWithData=True, ritorna un dict {key: entry} con i dati nei blocchi.
-        Se False, ritorna una lista di liste di chiavi.
+        Splits the arrays into `n_chunks` blocks based on the total number of elements (n * rep).
+        If returnWithData=True, yields dicts {key: entry} with the data in each block.
+        If False, returns a list of key lists.
         """
+
         chunks = self.getIndeciesOfUniformlySubdividedArray(n_chunks, interval)
     
         if returnWithData:
@@ -398,6 +401,11 @@ class ArraySampleContainer(BaseDataDictionary):
 
     
     def get(self, key, byKey = True):
+        """
+        Returns a sample either by its dictionary key (if byKey=True) or by integer index (if byKey=False).
+        Raises IndexError if the key or index is invalid.
+        """
+
         if byKey:
             if key in self.keys():
                 return self.data[key]
@@ -411,23 +419,42 @@ class ArraySampleContainer(BaseDataDictionary):
             
 
     def get_creation_arguments(self):
+        """
+        Returns a dictionary of creation arguments for all samples, indexed by integer key,
+        with arguments serialized to JSON-friendly format.
+        """
+
         creation_arguments = {}
         for key, sample in self.items():
             creation_arguments[int(key)] = sample.get_creation_arguments().to_dict(as_json=True)
         return creation_arguments
     
     def getFromIntervall(self, start, end):
+        """
+        Returns a sub-dictionary for the specified range of indices [start:end].
+        """
+
         keys = self.keys()[start: end]
         return self.getFromKeys(keys)
     
 
     def getFromKeys(self, keys):
+        """
+        Returns a sub-dictionary containing only the specified keys.
+        """
+
         intervallDict = {}
         for key in keys:
             intervallDict.update({key: self.data[key]})
         return intervallDict
 
     def keys(self, toSort=True, interval=None):
+        """
+        Returns the list of keys in the container.
+        Optionally sorts them and/or restricts to a given interval [start:end).
+        Raises IndexError if the interval is invalid.
+        """
+
         keys = list(self.data.keys())
     
         if toSort:
@@ -444,6 +471,9 @@ class ArraySampleContainer(BaseDataDictionary):
         return keys
 
     def __eq__(self, other):
+        """
+        Two containers are equal if their dictionary representations are deeply equal.
+        """
         return deep_compare(self.to_dict(), other.to_dict())
 
     def __hash__(self):
@@ -453,6 +483,10 @@ class ArraySampleContainer(BaseDataDictionary):
         return {key: sample_array.to_dict() for key, sample_array in self.items()}
 
     def estimate_data_size_MB(self):
+        """
+        Estimates the total size of all stored arrays in megabytes.
+        Calculation is based on: number of elements * element byte size (from dtype).
+        """
         total_bytes = 0
         for key, data in self.data.items():
             creation_arguments = data.get_creation_arguments()

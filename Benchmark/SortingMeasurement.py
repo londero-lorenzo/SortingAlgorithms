@@ -46,94 +46,96 @@ AlgorithmArguments = {
 
 class MeasurableTimeExecutionAlgorithm:
     """
-    Classe wrapper per la gestione e l'esecuzione di algoritmi misurabili nel tempo.
-    Permette di settare una funzione tra quelle disponibili, eseguirla su input forniti e ottenerne nome e riferimento.
+    Wrapper class for managing and executing time-measurable algorithms.
+    Allows setting a function from a predefined list, executing it on provided input, and retrieving its name or reference.
 
-    Attributi:
-        function (Callable): riferimento alla funzione algoritmica attualmente selezionata.
+    Attributes:
+        function (Callable): reference to the currently selected algorithmic function.
 
-    Metodi:
+    Methods:
         set(function: Callable) -> None:
-            Imposta la funzione da usare, verificando che sia tra quelle definite in AlgorithmArguments.
-            Solleva un'eccezione se la funzione non è riconosciuta.
+            Sets the function to be used, ensuring it is among those defined in AlgorithmArguments.
+            Raises an exception if the function is unrecognized.
 
         get() -> Callable:
-            Ritorna la funzione attualmente impostata.
+            Returns the currently set function.
 
         get_name() -> str:
-            Ritorna il nome (stringa) della funzione attualmente impostata.
+            Returns the name (string) of the currently set function.
 
         execute(array: Any) -> Any:
-            Esegue la funzione impostata sui dati forniti.
-            Gli argomenti effettivi vengono determinati dinamicamente tramite `AlgorithmArguments[nome_funzione](array)`.
+            Executes the selected function on the provided data.
+            The actual arguments are dynamically retrieved via `AlgorithmArguments[function_name](array)`.
 
     Raises:
-        Exception: se si tenta di settare una funzione non riconosciuta (non presente in `AlgorithmArguments`).
+        Exception: if attempting to set a function not listed in `AlgorithmArguments`.
     """
 
-    # Attributo statico: contiene la funzione corrente (inizialmente None)
+    # Static attribute: holds the current function (initially None)
     function = None
 
     def set(self, function):
         """
-        Imposta la funzione da utilizzare per le misurazioni.
-        Verifica che il nome della funzione sia presente tra quelli riconosciuti in AlgorithmArguments.
+        Sets the function to be used for measurements.
+        Checks that the function name is among the recognized keys in AlgorithmArguments.
         """
         if not function.__name__ in list(AlgorithmArguments.keys()):
-            # Solleva errore se la funzione non è tra quelle note
-            raise Exception(f"Unknown algorithm {function.__name__}.\nAvaliable algorithms: {list(AlgorithmArguments.keys())}")
+            # Raises error if the function is not recognized
+            raise Exception(f"Unknown algorithm {function.__name__}.\nAvailable algorithms: {list(AlgorithmArguments.keys())}")
 
-        # Salva il riferimento alla funzione da misurare
+        # Stores the reference to the function to be measured
         self.function = function
 
     def execute(self, array):
         """
-        Esegue la funzione salvata, passando gli argomenti ottenuti dinamicamente da AlgorithmArguments.
+        Executes the currently set function, passing arguments obtained dynamically from AlgorithmArguments.
         """
-        # Prende gli argomenti da passare in base al nome della funzione, poi la esegue
+        # Gets the required arguments for the function based on its name, then executes it
         return self.function(*(AlgorithmArguments[self.get().__name__](array)))
 
     def get(self):
         """
-        Restituisce il riferimento alla funzione attualmente impostata.
+        Returns the reference to the currently set function.
         """
         return self.function
 
     def get_name(self):
         """
-        Restituisce il nome della funzione attualmente impostata.
+        Returns the name of the currently set function.
         """
         return self.function.__name__
+
+
 
 
     
 def measure(function: Callable, minTime: float, *args) -> float:
     """
-    Misura il tempo medio di esecuzione della funzione `function`, ripetendola più volte finché il tempo totale
-    non supera `minTime`.
+    Measures the average execution time of the `function`, repeating it multiple times until
+    the total time exceeds `minTime`.
 
     Args:
-        function (Callable): la funzione da misurare. Deve accettare gli argomenti forniti in `args`.
-        minTime (float): tempo minimo cumulativo (in secondi) da raggiungere prima di calcolare la media.
-        *args: argomenti posizionali da passare alla funzione in ogni chiamata.
+        function (Callable): the function to be measured. It must accept the arguments provided in `args`.
+        minTime (float): minimum cumulative time (in seconds) to reach before calculating the average.
+        *args: positional arguments to be passed to the function in each call.
 
     Returns:
-        float: tempo medio (in secondi) per una singola esecuzione della funzione su `args`.
+        float: average time (in seconds) for a single execution of the function on `args`.
     """
 
-    count = 0  # Contatore del numero di esecuzioni effettuate
-    start_time = time.perf_counter()  # Tempo iniziale ad alta risoluzione
+    count = 0  # Counter for the number of executions performed
+    start_time = time.perf_counter()  # High-resolution start time
 
     while True:
-        function(*args)  # Esegue la funzione con gli argomenti specificati
-        end_time = time.perf_counter()  # Tempo dopo l'esecuzione
-        count += 1  # Incrementa il numero di ripetizioni
+        function(*args)  # Executes the function with the specified arguments
+        end_time = time.perf_counter()  # Time after execution
+        count += 1  # Increment the number of repetitions
 
-        # Se il tempo cumulativo ha superato minTime, termina il ciclo
+        # If cumulative time exceeds minTime, break the loop
         if end_time - start_time >= minTime:
             break
 
-    # Calcola il tempo medio dividendo il tempo totale per il numero di esecuzioni
+    # Calculate average time by dividing total time by the number of executions
     return (end_time - start_time) / count
 
 
@@ -143,48 +145,48 @@ def measure_container_array(array_sample_container: ArraySampleContainer,
                             function: MeasurableTimeExecutionAlgorithm, 
                             minTime: float = None) -> list[ArrayExecutionTime]:
     """
-    Misura i tempi di esecuzione di un algoritmo (function) su ciascun array presente in un oggetto ArraySampleContainer.
+    Measures the execution time of an algorithm (function) on each array contained in an ArraySampleContainer object.
 
     Args:
-        array_sample_container (ArraySampleContainer): contenitore di array su cui eseguire le misurazioni.
-        function (MeasurableTimeExecutionAlgorithm): wrapper dell'algoritmo da misurare (deve essere già settato).
-        minTime (float, opzionale): tempo minimo cumulativo da misurare per ciascun array per ottenere una media stabile.
-            Se non specificato, viene determinato tramite `SortingSettings.compute_min_time()`.
+        array_sample_container (ArraySampleContainer): container of arrays to measure.
+        function (MeasurableTimeExecutionAlgorithm): wrapper of the algorithm to be measured (must be already set).
+        minTime (float, optional): minimum cumulative time to measure for each array to obtain a stable average.
+            If not specified, it is computed via `SortingSettings.compute_min_time()`.
 
     Returns:
-        List[ArrayExecutionTime]: lista di oggetti che rappresentano i tempi medi di esecuzione per ciascuna configurazione di array.
+        List[ArrayExecutionTime]: list of objects representing average execution times for each array configuration.
 
     Raises:
-        AssertionError: se `array_sample_container` non è un'istanza di `ArraySampleContainer` o se l'integrità della struttura viene alterata durante la misurazione.
+        AssertionError: if `array_sample_container` is not an instance of `ArraySampleContainer`, or if the container
+        structure is altered during measurement.
     """
-    
 
-    # Creano due copie deep dell'array container per confrontare l'integrità e lavorare in sicurezza
+    # Create two deep copies of the array container to compare structural integrity and operate safely
     array_sample_container_copy_comparison = copy.deepcopy(array_sample_container)
     array_sample_container_copy = copy.deepcopy(array_sample_container)
 
-    # Se minTime non è specificato, lo si calcola dinamicamente
+    # If minTime is not specified, compute it dynamically
     if minTime is None:
         minTime = SortingSettings.compute_min_time()
     
-    # Primo test rapido per attivare eventuali ottimizzazioni warm-up
+    # Initial quick test to activate potential warm-up optimizations
     [measure(function, minTime, [i for i in range(100)])]
 
-    # Controllo di tipo: deve essere un ArraySampleContainer
+    # Type check: must be an instance of ArraySampleContainer
     assert isinstance(array_sample_container, ArrayDataManager.ArraySampleContainer), \
         f"Chunk element expected as ArraySampleContainer, got {type(array_sample_container)}"
     
-    array_execution_times = []  # Lista dei risultati temporali
+    array_execution_times = []  # List of timing results
 
-    # Itera su ciascun sample di array
+    # Iterate through each array sample
     for array_sample in array_sample_container_copy.get_samples():
         time_repetitions = []
 
-        # Per ogni ripetizione del sample, misura il tempo
+        # For each repetition of the sample, measure execution time
         for data in array_sample.get_sample():
             time_repetitions.append(measure(function, minTime, data))
 
-        # Costruisce un oggetto ArrayExecutionTime da ogni sample
+        # Build an ArrayExecutionTime object for each sample
         array_execution_times.append(
             ArrayDataManager.ArrayExecutionTime(
                 variability = array_sample.get_variability(),
@@ -193,7 +195,7 @@ def measure_container_array(array_sample_container: ArraySampleContainer,
             )
         )
 
-    # Verifica che la struttura iniziale non sia stata modificata durante la misurazione
+    # Verify that the initial structure was not modified during measurement
     assert ArrayDataManager.deep_compare(array_sample_container.to_dict(), 
                                          array_sample_container_copy_comparison.to_dict()), \
         f"Modification in array structure detected."
