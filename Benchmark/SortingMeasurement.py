@@ -50,14 +50,14 @@ class MeasurableTimeExecutionAlgorithm:
     Allows setting a function from a predefined list, executing it on provided input, and retrieving its name or reference.
 
     Attributes:
-        function (Callable): reference to the currently selected algorithmic function.
+        function (callable): reference to the currently selected algorithmic function.
 
     Methods:
-        set(function: Callable) -> None:
+        set(function: callable) -> None:
             Sets the function to be used, ensuring it is among those defined in AlgorithmArguments.
             Raises an exception if the function is unrecognized.
 
-        get() -> Callable:
+        get() -> callable:
             Returns the currently set function.
 
         get_name() -> str:
@@ -109,13 +109,13 @@ class MeasurableTimeExecutionAlgorithm:
 
 
     
-def measure(function: Callable, minTime: float, *args) -> float:
+def measure(function: callable, minTime: float, *args) -> float:
     """
     Measures the average execution time of the `function`, repeating it multiple times until
     the total time exceeds `minTime`.
 
     Args:
-        function (Callable): the function to be measured. It must accept the arguments provided in `args`.
+        function (callable): the function to be measured. It must accept the arguments provided in `args`.
         minTime (float): minimum cumulative time (in seconds) to reach before calculating the average.
         *args: positional arguments to be passed to the function in each call.
 
@@ -139,17 +139,15 @@ def measure(function: Callable, minTime: float, *args) -> float:
     return (end_time - start_time) / count
 
 
-
-## function to measure sorting time for determinate array chunk
-def measure_container_array(array_sample_container: ArraySampleContainer, 
-                            function: MeasurableTimeExecutionAlgorithm, 
-                            minTime: float = None) -> list[ArrayExecutionTime]:
+def measure_container_array(array_sample_container: ArrayDataManager.ArraySampleContainer, 
+                            function: callable, 
+                            minTime: float = None) -> list[ArrayDataManager.ArrayExecutionTime]:
     """
     Measures the execution time of an algorithm (function) on each array contained in an ArraySampleContainer object.
 
     Args:
         array_sample_container (ArraySampleContainer): container of arrays to measure.
-        function (MeasurableTimeExecutionAlgorithm): wrapper of the algorithm to be measured (must be already set).
+        function (callable of MeasurableTimeExecutionAlgorithm): wrapper of the algorithm to be measured (must be already set).
         minTime (float, optional): minimum cumulative time to measure for each array to obtain a stable average.
             If not specified, it is computed via `SortingSettings.compute_min_time()`.
 

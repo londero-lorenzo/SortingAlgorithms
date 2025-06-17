@@ -177,6 +177,6 @@ if __name__ == "__main__":
             raise ValueError("Pattern name not recognized.")
         generation_file_paths = find_file(args.file, args.searchFolder)
     else:
-        generation_file_paths = args.file
+        generation_file_paths = [args.file]
             
     generate_array_by_generation_files(generation_file_paths, args)
